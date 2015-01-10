@@ -1,0 +1,63 @@
+﻿@model IEnumerable<movietimes.ShowTimeReq>
+
+@{
+    ViewBag.Title = "Movies";
+}
+
+<h2>Movies</h2>
+
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.viewDate)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.viewZip)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.viewMiles)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.viewBeginTime)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.viewEndTime)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.titleStartsWith)
+        </th>
+        <th></th>
+    </tr>
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.viewDate)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.viewZip)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.viewMiles)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.viewBeginTime)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.viewEndTime)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.titleStartsWith)
+        </td>
+        <td>
+            @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
+            @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
+            @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
+        </td>
+    </tr>
+}
+
+</table>

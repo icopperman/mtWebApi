@@ -1,0 +1,104 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <style>
+        label { width: 100px; }
+
+        input { width: 100px;   }
+    </style>
+    <script src="Scripts/jquery-1.10.2.js"></script>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <div>
+            <div style="width:100px;float: left;">date</div>
+            <div style="width:100px;float: left;">zip</div>
+            <div style="width:100px; float: left;">miles</div>
+            <div style="width:100px; float: left;">time </div>
+            <div style="width:100px; float: left;">duration</div>
+            <div style="width:100px; float: left;">starts with</div>
+
+
+            <br />
+            <input type="text" id="viewdate" name="viewdate" runat="server" />
+            <input type="text" id="viewzip" name="viewzip" runat="server" />
+            <input type="text" id="viewmiles" name="viewmiles" runat="server" />
+            <input type="text" id="viewbegintime" name="viewbegintime" runat="server" />
+            <input type="text" id="viewendtime" name="viewendtime" runat="server" />
+            <input type="text" id="titlestartsWith" name="titlestartsWith" runat="server" />
+            <input type="text" id="timeZone" name="timeZone" runat="server" />
+            <input type="button" id="btnSubmit" name="btnSubmit" runat="server" value="Find Time" />
+        </div>
+        <div id="themovietimes" runat="server" />
+        <div id="content"></div>
+    </form>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            //var eltz = $("#timeZone");
+            //var elViewDate = $("#viewdate");
+            //var elBeginTime = $("#begintime");
+
+            var d = new Date();
+            var n = d.getTimezoneOffset();
+            var adate = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+            var zip = "10522";
+            var miles = "10";
+
+            $("#timeZone").val(n);
+            $("#viewdate").val(adate);
+            $("#viewbegintime").val(d.getHours());
+            $("#viewmiles").val(miles);
+            $("#viewzip").val(zip);
+
+            $("#btnSubmit").on("click", function () {
+
+                var o = {
+                    viewDate: $("#viewdate").val(),
+                    viewZip: $("#viewzip").val(),
+                    viewmiles: $("#viewmiles").val(),
+                    viewbegintime: $("#viewbegintime").val(),
+                    viewendtime: $("#viewendtime").val(),
+                    titlestartswith: $("#titlestartsWith").val()
+                };
+
+                var oo = JSON.stringify(o);
+
+                $("#thetable").remove();
+
+                $.ajax("/api/values",
+                {
+                    type: "POST",
+                    contentType: "application/json",
+                    data: oo,
+                    success: function (data) {
+                        $("#content").append(  "<table id='thetable' rules='all' border='1'>"
+                +"<tr>"
+                +"    <th>cnt</th>"
+                  +"  <th>time</th>"
+                    +"<th>rt</th>"
+                    +"<th width=400>movie</th>"
+                    +"<th>theater</th>"
+                +"</tr>"
+            +"</table>");
+                        $.each(data,
+                            function (idx, aval) {
+                                var arow = "<tr>" 
+                                    + "<td>" + idx + "</td>"
+                                    + "<td>" + aval.datetime + "</td>"
+                                    + "<td>" + aval.runTime + "</td>"
+                                    + "<td>" + aval.title + "</td>"
+                                    + "<td>" + aval.theTheatre + "</td>"
+                                    + "</tr>";
+                                $("#thetable").append(arow);
+
+                            });
+                    }
+                });
+            });
+
+        });
+
+    </script> 
+</body>
+</html>

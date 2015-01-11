@@ -4,7 +4,6 @@
     <title></title>
     <style>
         label { width: 100px; }
-
         input { width: 100px;   }
     </style>
     <script src="Scripts/jquery-1.10.2.js"></script>
@@ -31,7 +30,11 @@
             <input type="button" id="btnSubmit" name="btnSubmit" runat="server" value="Find Time" />
         </div>
         <div id="themovietimes" runat="server" />
-        <div id="content"></div>
+        <div id="content">
+            <div id="loadingDiv" style="display:none;">
+                Loading....<span id="acnt">0</span>
+            </div>
+        </div>
     </form>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -44,6 +47,15 @@
             var adate = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
             var zip = "10522";
             var miles = "10";
+            var theinterval;
+
+            function updateLoadDiv()
+            {
+                var currsecs = $("#acnt").text();
+                var secs = parseInt(currsecs, 10) + 1;
+                $("#acnt").text(secs);
+
+            };
 
             $("#timeZone").val(n);
             $("#viewdate").val(adate);
@@ -71,16 +83,16 @@
                     type: "POST",
                     contentType: "application/json",
                     data: oo,
+                    beforeSend: function(){
+                        $("#loadingDiv").show();
+                        theinterval = setInterval(updateLoadDiv, 1000);
+                    },
                     success: function (data) {
+                        clearInterval(theinterval);
+                        $("#loadingDiv").hide();
                         $("#content").append(  "<table id='thetable' rules='all' border='1'>"
-                +"<tr>"
-                +"    <th>cnt</th>"
-                  +"  <th>time</th>"
-                    +"<th>rt</th>"
-                    +"<th width=400>movie</th>"
-                    +"<th>theater</th>"
-                +"</tr>"
-            +"</table>");
+                            +"<tr><th>cnt</th><th>time</th><th>rt</th>"
+                            +"<th width=400>movie</th><th>theater</th></tr></table>");
                         $.each(data,
                             function (idx, aval) {
                                 var arow = "<tr>" 

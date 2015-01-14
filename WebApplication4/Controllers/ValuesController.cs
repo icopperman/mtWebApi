@@ -103,7 +103,10 @@ namespace WebApplication4.Controllers
 
             }
 
-            List<m.TimesWithNameTheater> zz = filteredTimes.OrderBy(mt => mt.datetime).ToList();
+            List<m.TimesWithNameTheater> zz = filteredTimes
+                .OrderBy(mt => mt.datetime)
+                .ThenBy(mt => mt.title)
+                .ToList();
 
             return zz;
 

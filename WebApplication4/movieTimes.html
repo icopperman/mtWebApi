@@ -82,10 +82,21 @@
                 {
                     type: "POST",
                     contentType: "application/json",
+                    dataType: "jsonp",
+                    //jsonp: "jsonp",
+                    jsonpCallback: "jsonpCallback",
                     data: oo,
                     beforeSend: function(){
                         $("#loadingDiv").show();
                         theinterval = setInterval(updateLoadDiv, 1000);
+                    },
+                    error: function (jqxhr, textstatus, errorthrown) {
+                        clearInterval(theinterval);
+                        alert(textstatus + "," + errorthrown);
+                    },
+                    complete: function (jqxhr, textstatus) {
+                        clearInterval(theinterval);
+                        alert(textstatus);
                     },
                     success: function (data) {
                         clearInterval(theinterval);

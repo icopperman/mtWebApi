@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using f=System.Net.Http.Formatting;
+using p = WebApiContrib.Formatting.Jsonp;
 using System.Web.Http;
 
 namespace WebApplication4
@@ -22,11 +23,13 @@ namespace WebApplication4
             );
 
             f.MediaTypeFormatterCollection mtfc = config.Formatters;
-
+            
             f.XmlMediaTypeFormatter xmtf =  mtfc.XmlFormatter;
 
             bool rc = mtfc.Remove(xmtf);
-
+            var jsonp = new p.JsonpMediaTypeFormatter(mtfc.JsonFormatter);
+            mtfc.Insert(0, jsonp);
+ 
             int i = 0;
         }
     }

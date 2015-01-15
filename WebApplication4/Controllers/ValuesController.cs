@@ -17,8 +17,8 @@ namespace WebApplication4.Controllers
     public class ValuesController : ApiController
     {
         // GET api/values
-        [HttpPost]
-        public IEnumerable<m.TimesWithNameTheater> Post(m.ShowTimeReq stq)
+        [HttpGet]
+        public IEnumerable<m.TimesWithNameTheater> Post([FromUri] m.ShowTimeReq stq)
         {
             List<m.TimesWithNameTheater> xx = getTheData(stq);
 
@@ -103,7 +103,10 @@ namespace WebApplication4.Controllers
 
             }
 
-            List<m.TimesWithNameTheater> zz = filteredTimes.OrderBy(mt => mt.datetime).ToList();
+            List<m.TimesWithNameTheater> zz = filteredTimes
+                .OrderBy(mt => mt.datetime)
+                .ThenBy(mt => mt.title)
+                .ToList();
 
             return zz;
 

@@ -78,18 +78,27 @@
 
                 $("#thetable").remove();
 
-                $.ajax(
-                    //"/api/values",
-                        "http://emptywebapiazure.azurewebsites.net/api/values",
+                $.ajax("http://emptywebapiazure.azurewebsites.net/api/values",
                 {
-                    type: "POST",
+                    type: "GET",
                     contentType: "application/json",
-                    data: oo,
+                    dataType: "jsonp",
+                    //jsonp: "jsonp",
+                    jsonpCallback: "jsonpCallback",
+                    data: o,
                     beforeSend: function(){
                         $("#loadingDiv").show();
                         theinterval = setInterval(updateLoadDiv, 1000);
                     },
-                    success: function (data) {
+                    error: function (jqxhr, textstatus, errorthrown) {
+                        clearInterval(theinterval);
+                        alert(textstatus + "," + errorthrown);
+                    },
+                    complete: function (jqxhr, textstatus) {
+                        clearInterval(theinterval);
+                        alert(textstatus);
+                    },
+                    success: function jsonpCallback(data) {
                         clearInterval(theinterval);
                         $("#loadingDiv").hide();
                         $("#content").append(  "<table id='thetable' rules='all' border='1'>"

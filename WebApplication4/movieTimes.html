@@ -36,6 +36,9 @@
             </div>
         </div>
     </form>
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCA2po6hq5ExEWRqQbDH6hI34fJfA9rEVo">
+    </script>
     <script type="text/javascript">
         $(document).ready(function () {
             //var eltz = $("#timeZone");
@@ -57,6 +60,37 @@
 
             };
 
+            function cbOK(pos)
+            {
+                var lat = pos.coords.latitude;
+                var long = pos.coords.longitude;
+                var geo = new google.maps.Geocoder();
+                var latlng = new google.maps.LatLng(lat, long);
+                geo.geocode(
+                    {
+                        'latLng': latlng
+                       //,locationType: "APPROXIMATE"
+                       // ,'key': "AIzaSyCA2po6hq5ExEWRqQbDH6hI34fJfA9rEVo"
+                       // ,'result_type': "postal_code"
+
+                    },
+                    function (results, status) {
+                    if (status == google.maps.GeocoderStatus.OK) {
+                        alert("ok");
+                    } else {
+                        alert('Geocoder failed due to: ' + status);
+                    }
+                });
+            }
+
+            function cbError(err) 
+            {
+                var acode = err.code;
+            }
+
+            var geoOptions = { enableHighAccuracy: false, timeout: 300000, maximumAge: 300 };
+            window.navigator.geolocation.getCurrentPosition(cbOK, cbError, geoOptions);
+            
             $("#timeZone").val(n);
             $("#viewdate").val(adate);
             $("#viewbegintime").val(d.getHours());

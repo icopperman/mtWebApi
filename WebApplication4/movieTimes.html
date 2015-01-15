@@ -9,7 +9,7 @@
     <script src="Scripts/jquery-1.10.2.js"></script>
 </head>
 <body>
-    <form id="form1" runat="server">
+    <form id="form1" >
         <div>
             <div style="width:100px;float: left;">date</div>
             <div style="width:100px;float: left;">zip</div>
@@ -20,16 +20,16 @@
 
 
             <br />
-            <input type="text" id="viewdate" name="viewdate" runat="server" />
-            <input type="text" id="viewzip" name="viewzip" runat="server" />
-            <input type="text" id="viewmiles" name="viewmiles" runat="server" />
-            <input type="text" id="viewbegintime" name="viewbegintime" runat="server" />
-            <input type="text" id="viewendtime" name="viewendtime" runat="server" />
-            <input type="text" id="titlestartsWith" name="titlestartsWith" runat="server" />
-            <input type="text" id="timeZone" name="timeZone" runat="server" />
-            <input type="button" id="btnSubmit" name="btnSubmit" runat="server" value="Find Time" />
+            <input type="text" id="viewdate" name="viewdate"  />
+            <input type="text" id="viewzip" name="viewzip"  />
+            <input type="text" id="viewmiles" name="viewmiles"  />
+            <input type="text" id="viewbegintime" name="viewbegintime"  />
+            <input type="text" id="viewendtime" name="viewendtime"  />
+            <input type="text" id="titlestartsWith" name="titlestartsWith"  />
+            <input type="text" id="timeZone" name="timeZone"  />
+            <input type="button" id="btnSubmit" name="btnSubmit"  value="Find Time" />
         </div>
-        <div id="themovietimes" runat="server" />
+        <div id="themovietimes"  />
         <div id="content">
             <div id="loadingDiv" style="display:none;">
                 Loading....<span id="acnt">0</span>
@@ -78,7 +78,9 @@
 
                 $("#thetable").remove();
 
-                $.ajax("/api/values",
+                $.ajax(
+                    //"/api/values",
+                        "http://emptywebapiazure.azurewebsites.net/api/values",
                 {
                     type: "POST",
                     contentType: "application/json",

@@ -80,12 +80,12 @@
 
                 $.ajax("/api/values",
                 {
-                    type: "POST",
+                    type: "GET",
                     contentType: "application/json",
                     dataType: "jsonp",
                     //jsonp: "jsonp",
                     jsonpCallback: "jsonpCallback",
-                    data: oo,
+                    data: o,
                     beforeSend: function(){
                         $("#loadingDiv").show();
                         theinterval = setInterval(updateLoadDiv, 1000);
@@ -98,7 +98,7 @@
                         clearInterval(theinterval);
                         alert(textstatus);
                     },
-                    success: function (data) {
+                    success: function jsonpCallback(data) {
                         clearInterval(theinterval);
                         $("#loadingDiv").hide();
                         $("#content").append(  "<table id='thetable' rules='all' border='1'>"

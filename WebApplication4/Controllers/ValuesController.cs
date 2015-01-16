@@ -168,8 +168,12 @@ namespace WebApplication4.Controllers
             string zipCode      = stq.viewZip;// "10522";
             string today        = stq.viewDate;
             string radius       = stq.viewMiles;// "10";
-
-            showtimesUrl        = String.Format(showtimesUrl  + "?startDate={0}&zip={1}&radius={2}&api_key={3}", today, zipCode, radius, apikey);
+            string lat          = stq.viewLat;
+            string lon          = stq.viewLon;
+            zipCode = "";
+            showtimesUrl = (String.IsNullOrEmpty(zipCode) == true ) ?
+                 String.Format(showtimesUrl + "?startDate={0}&radius={1}&api_key={2}&lat={3}&lng={4}", today, radius, apikey, lat, lon)
+               : String.Format(showtimesUrl + "?startDate={0}&radius={1}&api_key={2}&zip={3}", today, radius, apikey, zipCode);
             
             wreq                = WebRequest.Create(showtimesUrl);
             wreq.Method         = "GET";

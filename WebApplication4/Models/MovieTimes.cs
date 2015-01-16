@@ -19,6 +19,8 @@ namespace movietimes
         public string viewBeginTime { get; set; }
         public string viewEndTime { get; set; }
         public string titleStartsWith { get; set; }
+        public string viewLat { get; set; }
+        public string viewLon { get; set; }
         
     }
 

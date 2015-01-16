@@ -48,7 +48,7 @@
             var d = new Date();
             var n = d.getTimezoneOffset();
             var adate = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
-            var zip = "10522";
+            var zip = "";
             var miles = "10";
             var theinterval;
 
@@ -60,15 +60,19 @@
 
             };
 
-            function cbOK(pos)
+            function cbOK1(pos)
             {
                 var lat = pos.coords.latitude;
                 var long = pos.coords.longitude;
                 var geo = new google.maps.Geocoder();
-                var latlng = new google.maps.LatLng(lat, long);
+                var xlatlng = new google.maps.LatLng(lat, long);
                 geo.geocode(
                     {
-                        'latLng': latlng
+                        location: xlatlng
+                        //,componentRestrictions: {
+                        //    "administrativeArea": ""
+                        //    , "locality": ""
+                        //}
                        //,locationType: "APPROXIMATE"
                        // ,'key': "AIzaSyCA2po6hq5ExEWRqQbDH6hI34fJfA9rEVo"
                        // ,'result_type': "postal_code"
@@ -83,6 +87,86 @@
                 });
             }
 
+            function cbOK(pos)
+            {
+                var posLatLon = pos.coords.latitude + "," + pos.coords.longitude;
+
+                $.ajax("https://maps.googleapis.com/maps/api/geocode/json",
+                {
+                    
+                    type: "GET",
+                    //contentType: "application/json",
+                    //dataType: "jsonp",
+                    //jsonp: "jsonp",
+                    //jsonpCallback: "jsonpCallback",
+                    data: {
+                        key: "AIzaSyCA2po6hq5ExEWRqQbDH6hI34fJfA9rEVo",
+                        latlng: posLatLon,
+                        result_type: "postal_code"
+                    },
+
+                    beforeSend: function () {
+                        var i = 0;
+                    },
+                    error: function (jqxhr, textstatus, errorthrown) {
+                        alert(textstatus + "," + errorthrown);
+                    },
+                    complete: function (jqxhr, textstatus) {
+                            alert(textstatus);
+                    },
+                    success: function (geoResults) {
+                  
+
+                        $("#timeZone").val(n);
+                        $("#viewdate").val(adate);
+                        $("#viewbegintime").val(d.getHours());
+                        $("#viewmiles").val(miles);
+
+                        if (geoResults.status != "OK") {
+                            $("#viewzip").val("");
+                            return;
+                        }
+
+                        for (var i = 0; i < geoResults.results.length; i++) {
+                            
+                            var ageoResult = null;
+                            
+                            for (var j = 0; j < geoResults.results[i].types.length; j++) {
+
+                                if (geoResults.results[i].types[j] == "postal_code") {
+                                    ageoResult = geoResults.results[i];
+                                    break;
+                                } //end for loop over a georesult type array
+                            } 
+
+                            if (ageoResult == null) continue;
+
+                            for (var k = 0; k < ageoResult.address_components.length; k++) {
+
+                                var aAddrCompo = null;
+
+                                for (var l = 0; l < ageoResult.address_components[k].types.length; l++) {
+
+                                    if (ageoResult.address_components[k].types[l] == "postal_code") {
+                                        aAddrCompo = ageoResult.address_components[k];
+                                        break;
+                                    }
+                                } //end for loop over a georesult type array
+
+                                if (aAddrCompo == null) continue;
+
+                                zip = aAddrCompo.short_name;
+                                $("#viewzip").val(zip);
+
+                                break;
+
+                            }
+
+                        } //end for loop over geoResults
+                    } //end success func
+                });
+            }
+
             function cbError(err) 
             {
                 var acode = err.code;
@@ -90,12 +174,7 @@
 
             var geoOptions = { enableHighAccuracy: false, timeout: 300000, maximumAge: 300 };
             window.navigator.geolocation.getCurrentPosition(cbOK, cbError, geoOptions);
-            
-            $("#timeZone").val(n);
-            $("#viewdate").val(adate);
-            $("#viewbegintime").val(d.getHours());
-            $("#viewmiles").val(miles);
-            $("#viewzip").val(zip);
+  
 
             $("#btnSubmit").on("click", function () {
 
@@ -111,7 +190,8 @@
                 var oo = JSON.stringify(o);
 
                 $("#thetable").remove();
-
+                
+                
                 $.ajax("http://emptywebapiazure.azurewebsites.net/api/values",
                 {
                     type: "GET",

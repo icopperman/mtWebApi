@@ -51,6 +51,12 @@
             var zip = "";
             var miles = "10";
             var theinterval;
+            var lat, lon;
+
+            console.log("ready function, starting geolcation to get lat/lon");
+
+            var geoOptions = { enableHighAccuracy: false, timeout: 300000, maximumAge: 0 };
+            window.navigator.geolocation.getCurrentPosition(geoOK, geoError, geoOptions);
 
             function updateLoadDiv()
             {
@@ -80,19 +86,19 @@
                     },
                     function (results, status) {
                     if (status == google.maps.GeocoderStatus.OK) {
-                        alert("ok");
+                        alert("okkkkkkkk");
                     } else {
-                        alert('Geocoder failed due to: ' + status);
+                        alert('Geocoderkkkkkk failed due to: ' + status);
                     }
                 });
             }
-            var lat, lon;
 
-            function cbOK(pos)
+            function geoOK(pos)
             {
                 lat = pos.coords.latitude;
                 lon = pos.coords.longitude;
                 var posLatLon = lat + "," + lon;
+                console.log("geolocation complete ok");
 
                 $.ajax("https://maps.googleapis.com/maps/api/geocode/json",
                 {
@@ -109,16 +115,17 @@
                     },
 
                     beforeSend: function () {
-                        var i = 0;
+                        console.log("geocode api before send ");
                     },
                     error: function (jqxhr, textstatus, errorthrown) {
-                        alert(textstatus + "," + errorthrown);
+                        console.log( "geocode api error " + textstatus + "," + errorthrown);
                     },
                     complete: function (jqxhr, textstatus) {
-                            alert(textstatus);
+                        console.log("geocode api complete " + textstatus);
                     },
                     success: function (geoResults) {
-                  
+                    
+                        console.log("geocode api success ");
 
                         $("#timeZone").val(n);
                         $("#viewdate").val(adate);
@@ -170,14 +177,11 @@
                 });
             }
 
-            function cbError(err) 
+            function geoError(err) 
             {
                 var acode = err.code;
+                console.log("geolocate error " + acode);
             }
-
-            var geoOptions = { enableHighAccuracy: false, timeout: 300000, maximumAge: 300 };
-            window.navigator.geolocation.getCurrentPosition(cbOK, cbError, geoOptions);
-  
 
             $("#btnSubmit").on("click", function () {
 
@@ -197,8 +201,8 @@
 
                 $("#thetable").remove();
                 
-                //var mtURL = "api/values";
-                var mtURL = "http://emptywebapiazure.azurewebsites.net/api/values";
+                var mtURL = "api/values";
+                //var mtURL = "http://emptywebapiazure.azurewebsites.net/api/values";
 
                 $.ajax(mtURL,
                 {
@@ -208,19 +212,23 @@
                     //jsonp: "jsonp",
                     jsonpCallback: "jsonpCallback",
                     data: o,
-                    beforeSend: function(){
+                    beforeSend: function () {
+                        console.log("invoke webapi svc, before send");
                         $("#loadingDiv").show();
-                        theinterval = setInterval(updateLoadDiv, 1000);
+                        theintrval = setInterval(updateLoadDiv, 1000);
                     },
                     error: function (jqxhr, textstatus, errorthrown) {
+                        console.log("invoked webapi svc, error: " +  textstatus + "," + errorthrown);
                         clearInterval(theinterval);
-                        alert(textstatus + "," + errorthrown);
+                        //alert(textstatus + "," + errorthrown);
                     },
                     complete: function (jqxhr, textstatus) {
                         clearInterval(theinterval);
-                        alert(textstatus);
+                        console.log("invoked webapi svc, complete: " + textstatus);
+                        //alert(textstatus);
                     },
                     success: function jsonpCallback(data) {
+                        console.log("invoked webapi svc, success");
                         clearInterval(theinterval);
                         $("#loadingDiv").hide();
                         $("#content").append(  "<table id='thetable' rules='all' border='1'>"

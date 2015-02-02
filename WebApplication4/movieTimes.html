@@ -201,7 +201,7 @@
 
                 $("#thetable").remove();
                 
-                var mtURL = "api/values";
+                var mtURL = "http://" + window.location.host + "/api/values";
                 //var mtURL = "http://emptywebapiazure.azurewebsites.net/api/values";
 
                 $.ajax(mtURL,
@@ -238,10 +238,10 @@
                             function (idx, aval) {
                                 var arow = "<tr>" 
                                     + "<td>" + idx + "</td>"
-                                    + "<td>" + aval.datetime + "</td>"
-                                    + "<td>" + aval.runTime + "</td>"
-                                    + "<td>" + aval.title + "</td>"
-                                    + "<td>" + aval.theTheatre + "</td>"
+                                    + "<td>" + aval.d + "</td>"
+                                    + "<td>" + aval.r + "</td>"
+                                    + "<td>" + aval.t + "</td>"
+                                    + "<td>" + aval.h + "</td>"
                                     + "</tr>";
                                 $("#thetable").append(arow);
 

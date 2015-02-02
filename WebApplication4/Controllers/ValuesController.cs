@@ -28,69 +28,52 @@ namespace WebApplication4.Controllers
 
         private List<m.TimesWithNameTheater> getTheData(m.ShowTimeReq stq)
         {   
-            int begin, moviebegin;
             string thedata = "";
-            begin = moviebegin = 0;
-
-            //get data from db or web
-            thedata = GetMovieData(stq);
+            
+            List<m.TimesWithNameTheater> allTimesSorted = new List<m.TimesWithNameTheater>();
+            List<m.TimesWithNameTheater> filteredTimes = new List<m.TimesWithNameTheater>();
+            
+            //get data from db
+            thedata = GetMovieDataFromDB(stq);
 
             //if db failure, get directly from web
-            if (String.IsNullOrEmpty(thedata) == true)
+            if (String.IsNullOrEmpty(thedata) == false)
             {
-                thedata = GetDataFromWeb(stq);
+                //deseiralize data back from db
+                allTimesSorted = JsonConvert.DeserializeObject<List<m.TimesWithNameTheater>>(thedata);
             }
-            
-            List<m.Movie> themovies = JsonConvert.DeserializeObject<List<m.Movie>>(thedata);
-
-            List<m.MovieShowTimes> x = (themovies.Select(movie => new m.MovieShowTimes()
+            else
             {
-                title     = movie.title,    
-                showtimes = movie.showtimes,
-                runTime   = movie.runTime
-
-            })).ToList();
-
-            List<m.TimesWithNameTheater> allTimes     = new List<m.TimesWithNameTheater>();
-            List<m.TimesWithNameTheater> filteredTimes = new List<m.TimesWithNameTheater>();
-
-            foreach (m.Movie m in themovies)
-            {
-                foreach (m.Showtime st in m.showtimes)
-                {
-                    m.TimesWithNameTheater twnt = new m.TimesWithNameTheater();
-                    
-                    twnt.datetime   = st.dateTime;
-                    twnt.theTheatre = st.theatre.name;
-                    twnt.title      = m.title;
-                    twnt.runTime    = (String.IsNullOrEmpty(m.runTime) == true ) ? "????" : twnt.runTime = m.runTime.Substring(2, 2) + ":" + m.runTime.Substring(5, 2);
-
-                    allTimes.Add(twnt);
-
-                }
+                //this gets everything for the entire day
+                thedata = GetMovieDataFromWeb(stq);
+                
+                //reorg data by movie show time, leaves out alot of extraneous info
+                allTimesSorted = ReorgTheDataByTime(thedata);
+                
+                //put reorg'ed, filtered data to db
+                int rc = PutMovieDataIntoDB(stq, allTimesSorted);
             }
 
-            foreach (m.TimesWithNameTheater xx in allTimes)
-            {
-                string moviestarttime = xx.datetime.Substring(11);
-                xx.datetime = moviestarttime;
+            int beginViewTime = Convert.ToInt32(stq.viewBeginTime);
+            int endViewTime   = beginViewTime + Convert.ToInt32(stq.viewEndTime);
+            int movieBeginTime = 0;
+
+            foreach (m.TimesWithNameTheater xx in allTimesSorted)
+            {   
+                movieBeginTime = Convert.ToInt32(xx.datetime.Substring(0, 2));
 
                 if (String.IsNullOrEmpty(stq.viewBeginTime) == false)
                 {
-                    begin      = Convert.ToInt32(stq.viewBeginTime);
-                    moviebegin = Convert.ToInt32(moviestarttime.Substring(0, 2));
-
                     //ignore entry if moviebegin time is before time user is interested in
-                    if (moviebegin < begin) continue;
-
+                    if (movieBeginTime < beginViewTime) continue;
                 }
 
                 //is there a duration specified?
                 if (String.IsNullOrEmpty(stq.viewEndTime) == false)
                 {
                     //yes....ignore entry if moviebegin time is after time user is interested in
-                    int end = begin + Convert.ToInt32(stq.viewEndTime);
-                    if (moviebegin > end) continue;
+                    
+                    if (movieBeginTime > endViewTime) continue;
                 }
 
                 //
@@ -112,7 +95,41 @@ namespace WebApplication4.Controllers
 
         }
 
-        private string GetMovieData(m.ShowTimeReq stq)
+        private static List<m.TimesWithNameTheater> ReorgTheDataByTime(string thedata)
+        {   
+            List<m.Movie> themovies = JsonConvert.DeserializeObject<List<m.Movie>>(thedata);
+
+            List<m.TimesWithNameTheater> allTimes      = new List<m.TimesWithNameTheater>();
+            List<m.TimesWithNameTheater> allTimeSorted = new List<m.TimesWithNameTheater>();
+
+            //flatten Movie structure, organized by movie, into structure organized by time
+            foreach (m.Movie m in themovies)
+            {
+                foreach (m.Showtime st in m.showtimes)
+                {
+                    m.TimesWithNameTheater twnt = new m.TimesWithNameTheater();
+                    int idx = st.dateTime.IndexOf("T");
+                    string x = st.dateTime.Substring(idx);
+                    twnt.datetime = x;// st.dateTime;
+                    twnt.theTheater = st.theatre.name;
+                    twnt.title = m.title;
+                    twnt.runTime = (String.IsNullOrEmpty(m.runTime) == true) ? "????" : twnt.runTime = m.runTime.Substring(2, 2) + ":" + m.runTime.Substring(5, 2);
+
+                    allTimes.Add(twnt);
+
+                }
+            }
+
+            allTimeSorted = allTimes
+                   .OrderBy(mt => mt.datetime)
+                   .ThenBy(mt => mt.title)
+                   .ToList();
+
+            return allTimeSorted;
+
+        }
+
+        private string GetMovieDataFromDB(m.ShowTimeReq stq)
         {
             string rawJson = "";
 
@@ -129,22 +146,6 @@ namespace WebApplication4.Controllers
                 
                 if (o != null) rawJson = o.ToString();
 
-                if (String.IsNullOrEmpty(rawJson) == true)
-                {
-                    rawJson         = GetDataFromWeb(stq);
-
-                    sql             = String.Format("insert into rawJsonData(viewDate, viewZip, jsonData) values('{0}', '{1}', '{2}')",  stq.viewDate, stq.viewZip, rawJson);
-                    cmd.CommandText = sql;
-                    cmd.CommandType = CommandType.Text;
-
-                    //sql = "insert into rawJsonData(viewDate, viewZip, jsonData) values('@viewdate', '@viewzip', '@rawJson')";
-                    //cmd.Parameters.AddWithValue("@viewdate", this.viewdate.Value);
-                    //cmd.Parameters.AddWithValue("@viewzip", this.viewzip.Value);
-                    //cmd.Parameters.AddWithValue("@rawJson", rawJson);
-
-                    cmd.ExecuteNonQuery();
-
-                }
             }
             catch (Exception ex)
             {
@@ -155,7 +156,34 @@ namespace WebApplication4.Controllers
 
         }
 
-        private string GetDataFromWeb(m.ShowTimeReq stq)
+        private int PutMovieDataIntoDB(m.ShowTimeReq stq, List<m.TimesWithNameTheater> allTimeSorted)
+        {
+            int rc = -1;
+
+            try
+            {
+                string rawJson     = JsonConvert.SerializeObject(allTimeSorted);
+                string sql         = String.Format("insert into rawJsonData(viewDate, viewZip, jsonData) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
+                string connStr     = ConfigurationManager.ConnectionStrings["MovieTimesConnectionString"].ConnectionString;
+                SqlConnection conn = new SqlConnection(connStr);
+                SqlCommand cmd     = new SqlCommand(sql, conn);
+                cmd.CommandText    = sql;
+                cmd.CommandType    = CommandType.Text;
+                
+                conn.Open();
+                rc = cmd.ExecuteNonQuery();
+
+            }
+            catch (Exception ex)
+            {
+                string x = ex.Message + "," + ex.StackTrace;
+            }
+
+            return rc;
+            
+        }
+
+        private string GetMovieDataFromWeb(m.ShowTimeReq stq)
         {
             WebRequest wreq;
             WebResponse wresp;
@@ -170,7 +198,7 @@ namespace WebApplication4.Controllers
             string radius       = stq.viewMiles;// "10";
             string lat          = stq.viewLat;
             string lon          = stq.viewLon;
-            zipCode = "";
+            //zipCode = "";
             showtimesUrl = (String.IsNullOrEmpty(zipCode) == true ) ?
                  String.Format(showtimesUrl + "?startDate={0}&radius={1}&api_key={2}&lat={3}&lng={4}", today, radius, apikey, lat, lon)
                : String.Format(showtimesUrl + "?startDate={0}&radius={1}&api_key={2}&zip={3}", today, radius, apikey, zipCode);
@@ -216,5 +244,13 @@ namespace WebApplication4.Controllers
         //sb.Append("</table>");
 
         //return sb.ToString();
+
+        //List<m.MovieShowTimes> x = (themovies.Select(movie => new m.MovieShowTimes()
+        //{
+        //    title = movie.title,
+        //    showtimes = movie.showtimes,
+        //    runTime = movie.runTime
+
+        //})).ToList();
     }
 }

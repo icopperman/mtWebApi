@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -33,10 +34,11 @@ namespace movietimes
 
     public class TimesWithNameTheater
     {
-        public string title { get; set; }
-        public string theTheatre { get; set; }
-        public string datetime { get; set; }
-        public string runTime { get; set; }
+        [JsonProperty("t")]public string title { get; set; }
+        [JsonProperty("h")]public string theTheater { get; set; }
+        [JsonProperty("d")]public string datetime { get; set; }
+        [JsonProperty("r")]public string runTime { get; set; }
+        [JsonProperty("s")]public string source { get; set; }
     }
 
     public class Theatre

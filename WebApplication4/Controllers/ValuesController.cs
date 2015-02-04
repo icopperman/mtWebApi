@@ -134,7 +134,7 @@ namespace WebApplication4.Controllers
                     {
                         m.TimesWithNameTheater twnt = new m.TimesWithNameTheater();
                         int idx                     = st.dateTime.IndexOf("T");
-                        string x                    = st.dateTime.Substring(idx);
+                        string x                    = st.dateTime.Substring(idx + 1);
                         twnt.datetime               = x;// st.dateTime;
                         twnt.theTheater             = st.theatre.name;
                         twnt.title                  = m.title;

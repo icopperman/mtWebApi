@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+﻿using ns=Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -62,7 +62,7 @@ namespace WebApplication4.Controllers
                 {
                     mr.Source = "db";
                     //deseiralize data back from db
-                    allTimesSorted = JsonConvert.DeserializeObject<List<m.TimesWithNameTheater>>(thedata);
+                    allTimesSorted = ns.JsonConvert.DeserializeObject<List<m.TimesWithNameTheater>>(thedata);
                 }
                 else
                 {
@@ -133,7 +133,7 @@ namespace WebApplication4.Controllers
 
             try
             {
-                themovies = JsonConvert.DeserializeObject<List<m.Movie>>(thedata);
+                themovies = ns.JsonConvert.DeserializeObject<List<m.Movie>>(thedata);
 
                 //flatten Movie structure, organized by movie, into structure organized by time
                 foreach (m.Movie m in themovies)
@@ -205,7 +205,7 @@ namespace WebApplication4.Controllers
 
             try
             {
-                string rawJson     = JsonConvert.SerializeObject(allTimeSorted);
+                string rawJson     = ns.JsonConvert.SerializeObject(allTimeSorted);
                 string sql         = String.Format("insert into rawJsonData(viewDate, viewZip, jsonData) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
                 string connStr     = ConfigurationManager.ConnectionStrings["MovieTimesConnectionString"].ConnectionString;
                 SqlConnection conn = new SqlConnection(connStr);
@@ -263,6 +263,20 @@ namespace WebApplication4.Controllers
                 thedata     = sr.ReadToEnd();
                 
                 x           = thedata.Replace("'", "''");
+            }
+            catch (WebException wex)
+            {
+                WebResponse wr = wex.Response;
+                Stream ss = wr.GetResponseStream();
+                StreamReader ssr = new StreamReader(ss);
+                string xxx = ssr.ReadToEnd();
+                ns.Linq.JObject jo = ns.Linq.JObject.Parse(xxx);
+                dynamic dd = ns.Linq.JObject.Parse(xxx);
+
+                mr.Status = "fail";
+                mr.ErrMessage.Add(wex.Message + "," + jo["errorCode"] + "," + jo["errorMessage"] + "," + wex.StackTrace);
+                throw wex;
+
             }
             catch (Exception ex)
             {

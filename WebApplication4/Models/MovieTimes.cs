@@ -32,13 +32,21 @@ namespace movietimes
         public List<Showtime> showtimes;
     }
 
+    public class MovieResults
+    {
+        public string Status { get; set; }
+        public string Source { get; set; }
+        public List<string> ErrMessage { get; set; }
+        public List<TimesWithNameTheater> MovieTimes { get; set; }
+
+    }
+
     public class TimesWithNameTheater
     {
         [JsonProperty("t")]public string title { get; set; }
         [JsonProperty("h")]public string theTheater { get; set; }
         [JsonProperty("d")]public string datetime { get; set; }
         [JsonProperty("r")]public string runTime { get; set; }
-        [JsonProperty("s")]public string source { get; set; }
     }
 
     public class Theatre

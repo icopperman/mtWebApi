@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+﻿using ns=Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -16,10 +16,16 @@ namespace WebApplication4.Controllers
 {
     public class ValuesController : ApiController
     {
+        public m.MovieResults mr = new m.MovieResults();
+
         // GET api/values
         [HttpGet]
-        public IEnumerable<m.TimesWithNameTheater> Post([FromUri] m.ShowTimeReq stq)
+//      public IEnumerable<m.TimesWithNameTheater> Post([FromUri] m.ShowTimeReq stq)
+        public m.MovieResults Post([FromUri] m.ShowTimeReq stq)
         {
+            mr.Status = "ok";
+            mr.ErrMessage = new List<string>();
+
             List<m.TimesWithNameTheater> xx = new List<m.TimesWithNameTheater>();
 
             try
@@ -29,10 +35,12 @@ namespace WebApplication4.Controllers
             }
             catch (Exception ex)
             {
-                xx.Add(new m.TimesWithNameTheater { datetime = DateTime.Now.ToString(), runTime = "0", theTheater = ex.Message, title = ex.StackTrace });
+                mr.Status = "fail";
+                mr.ErrMessage.Add(ex.Message + ", " + ex.StackTrace);
             }
 
-            return xx; 
+            mr.MovieTimes = xx;
+            return mr; 
 
         }
 
@@ -52,14 +60,15 @@ namespace WebApplication4.Controllers
                 //if db failure, get directly from web
                 if (String.IsNullOrEmpty(thedata) == false)
                 {
+                    mr.Source = "db";
                     //deseiralize data back from db
-                    allTimesSorted = JsonConvert.DeserializeObject<List<m.TimesWithNameTheater>>(thedata);
+                    allTimesSorted = ns.JsonConvert.DeserializeObject<List<m.TimesWithNameTheater>>(thedata);
                 }
                 else
                 {
                     //this gets everything for the entire day
                     thedata = GetMovieDataFromWeb(stq);
-
+                    mr.Source = "web";
                     //reorg data by movie show time, leaves out alot of extraneous info
                     allTimesSorted = ReorgTheDataByTime(thedata);
 
@@ -106,8 +115,9 @@ namespace WebApplication4.Controllers
             }
             catch (Exception ex)
             {
-                //rawJson = "{ err: " + ex.Message + ","  + "stack: " + ex.StackTrace + "}";
-                throw;
+                mr.Status = "fail: ";
+                mr.ErrMessage.Add(ex.Message + ", " + ex.StackTrace);
+                throw ex;
 
             }
 
@@ -115,7 +125,7 @@ namespace WebApplication4.Controllers
 
         }
 
-        private static List<m.TimesWithNameTheater> ReorgTheDataByTime(string thedata)
+        private List<m.TimesWithNameTheater> ReorgTheDataByTime(string thedata)
         {   
             List<m.Movie> themovies                    = new List<m.Movie>();
             List<m.TimesWithNameTheater> allTimes      = new List<m.TimesWithNameTheater>();
@@ -123,7 +133,7 @@ namespace WebApplication4.Controllers
 
             try
             {
-                themovies = JsonConvert.DeserializeObject<List<m.Movie>>(thedata);
+                themovies = ns.JsonConvert.DeserializeObject<List<m.Movie>>(thedata);
 
                 //flatten Movie structure, organized by movie, into structure organized by time
                 foreach (m.Movie m in themovies)
@@ -151,8 +161,9 @@ namespace WebApplication4.Controllers
             }
             catch (Exception ex)
             {
-                //rawJson = "{ err: " + ex.Message + "," + "stack: " + ex.StackTrace + "}";
-                throw;
+                mr.Status = "fail: ";
+                mr.ErrMessage.Add(ex.Message + ", " + ex.StackTrace);
+                throw ex;
             }
 
             return allTimeSorted;
@@ -179,8 +190,9 @@ namespace WebApplication4.Controllers
             }
             catch (Exception ex)
             {
-                //rawJson = "{ err: "   + ex.Message    + "," + "stack: " + ex.StackTrace + "}";
-                throw;
+                mr.Status = "fail: ";
+                mr.ErrMessage.Add(ex.Message + ", " + ex.StackTrace);
+                throw ex;
             }
 
             return rawJson;
@@ -193,7 +205,7 @@ namespace WebApplication4.Controllers
 
             try
             {
-                string rawJson     = JsonConvert.SerializeObject(allTimeSorted);
+                string rawJson     = ns.JsonConvert.SerializeObject(allTimeSorted);
                 string sql         = String.Format("insert into rawJsonData(viewDate, viewZip, jsonData) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
                 string connStr     = ConfigurationManager.ConnectionStrings["MovieTimesConnectionString"].ConnectionString;
                 SqlConnection conn = new SqlConnection(connStr);
@@ -207,8 +219,9 @@ namespace WebApplication4.Controllers
             }
             catch (Exception ex)
             {
-                //rawJson = "{ err: " + ex.Message + "," + "stack: " + ex.StackTrace + "}";
-                throw;
+                mr.Status = "fail: ";
+                mr.ErrMessage.Add(ex.Message + ", " + ex.StackTrace);
+                throw ex;
             }
 
             return rc;
@@ -251,10 +264,25 @@ namespace WebApplication4.Controllers
                 
                 x           = thedata.Replace("'", "''");
             }
+            catch (WebException wex)
+            {
+                WebResponse wr = wex.Response;
+                Stream ss = wr.GetResponseStream();
+                StreamReader ssr = new StreamReader(ss);
+                string xxx = ssr.ReadToEnd();
+                ns.Linq.JObject jo = ns.Linq.JObject.Parse(xxx);
+                dynamic dd = ns.Linq.JObject.Parse(xxx);
+
+                mr.Status = "fail";
+                mr.ErrMessage.Add(wex.Message + "," + jo["errorCode"] + "," + jo["errorMessage"] + "," + wex.StackTrace);
+                throw wex;
+
+            }
             catch (Exception ex)
             {
-                //rawJson = "{ err: " + ex.Message + ","  + "stack: " + ex.StackTrace + "}";
-                throw;
+                mr.Status = "fail: ";
+                mr.ErrMessage.Add(ex.Message + ", " + ex.StackTrace);
+                throw ex;
             }
 
             return x;

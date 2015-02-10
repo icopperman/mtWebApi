@@ -231,26 +231,39 @@
                         console.log("invoked webapi svc, success");
                         clearInterval(theinterval);
                         $("#loadingDiv").hide();
-                        $("#content").append(  "<table id='thetable' rules='all' border='1'>"
-                            +"<tr><th>cnt</th><th>time</th><th>rt</th>"
-                            +"<th width=400>movie</th><th>theater</th></tr></table>");
-                        $.each(data,
-                            function (idx, aval) {
-                                var arow = "<tr>" 
-                                    + "<td>" + idx + "</td>"
-                                    + "<td>" + aval.d + "</td>"
-                                    + "<td>" + aval.r + "</td>"
-                                    + "<td>" + aval.t + "</td>"
-                                    + "<td>" + aval.h + "</td>"
-                                    + "</tr>";
-                                $("#thetable").append(arow);
-
+                        var rc = data.Status;
+                        if (rc == "fail")
+                        {
+                            $("#content").append("<h3>Error!</h3>");
+                            $.each(data.ErrMessage, function (idx, amsg) {
+                                console.log(amsg);
                             });
-                    }
-                });
-            });
 
-        });
+                            return;
+                        }
+                        else
+                        {
+                            $("#content").append(  "<table id='thetable' rules='all' border='1'>"
+                                +"<tr><th>cnt</th><th>time</th><th>rt</th>"
+                                +"<th width=400>movie</th><th>theater</th></tr></table>");
+                            $.each(data.MovieTimes,
+                                function (idx, aval) {
+                                    var arow = "<tr>" 
+                                        + "<td>" + idx + "</td>"
+                                        + "<td>" + aval.d + "</td>"
+                                        + "<td>" + aval.r + "</td>"
+                                        + "<td>" + aval.t + "</td>"
+                                        + "<td>" + aval.h + "</td>"
+                                        + "</tr>";
+                                    $("#thetable").append(arow);
+
+                                });
+                        }
+                    } //end success function
+                }); //end ajax
+            }); //end button on submit
+
+        }); //end doc ready
 
     </script> 
 </body>

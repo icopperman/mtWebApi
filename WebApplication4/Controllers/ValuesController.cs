@@ -29,9 +29,7 @@ namespace WebApplication4.Controllers
             }
             catch (Exception ex)
             {
-
                 xx.Add(new m.TimesWithNameTheater { datetime = DateTime.Now.ToString(), runTime = "0", theTheater = ex.Message, title = ex.StackTrace });
-
             }
 
             return xx; 

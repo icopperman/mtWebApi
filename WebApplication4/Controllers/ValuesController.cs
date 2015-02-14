@@ -76,6 +76,19 @@ namespace WebApplication4.Controllers
                     int rc = PutMovieDataIntoDB(stq, allTimesSorted);
                 }
 
+                int totMovies = allTimesSorted.Count;
+
+                var grouped = allTimesSorted
+                    .GroupBy(x => ( x.title.Length < 20 ) ? x.title : x.title.Substring(0,20));
+
+                var groupCount = grouped
+                    .Select(x => new { mt = x.Key, 
+                        mtCnt = x.Count(),
+                        mtPercent = ((float)x.Count()*100 / totMovies).ToString("F")
+                    });
+                var groupCountOrderMT = groupCount.OrderBy(x => x.mt);
+                var groupCountOrderNum = groupCount.OrderByDescending(x => x.mtCnt);
+
                 int beginViewTime  = Convert.ToInt32(stq.viewBeginTime);
                 int endViewTime    = beginViewTime + Convert.ToInt32(stq.viewEndTime);
                 int movieBeginTime = 0;
@@ -239,8 +252,9 @@ namespace WebApplication4.Controllers
 
             try
             {
-                string apikey       = "axryg8wt4ajne2ghg5junxbg";
-                string baseUrl      = "http://data.tmsapi.com/v1";
+                //string apikey       = "axryg8wt4ajne2ghg5junxbg"; //v1
+                string apikey       = "d2er6ess8g5eccjhju6puy5p"; //v1.1
+                string baseUrl      = "http://data.tmsapi.com/v1.1";
                 string showtimesUrl = baseUrl + "/movies/showings";
                 string zipCode      = stq.viewZip;// "10522";
                 string today        = stq.viewDate;

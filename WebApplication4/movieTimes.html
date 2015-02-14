@@ -28,6 +28,10 @@
             <input type="text" id="titlestartsWith" name="titlestartsWith"  />
             <input type="text" id="timeZone" name="timeZone"  />
             <input type="button" id="btnSubmit" name="btnSubmit"  value="Find Time" />
+            <input type="button" id="btnSortTitle" name="btnSortTitle" value="Sort by Title" />
+            <input type="button" id="btnSortTheater" name="btnSortTheater" value="Sort by Theater" />
+
+
         </div>
         <div id="themovietimes"  />
         <div id="content">
@@ -52,6 +56,7 @@
             var miles = "10";
             var theinterval;
             var lat, lon;
+            var movieData;
 
             console.log("ready function, starting geolcation to get lat/lon");
 
@@ -183,6 +188,69 @@
                 console.log("geolocate error " + acode);
             }
 
+            $("#content").on("click", "th#hdrTheater", function () {
+
+                var moviesByTheater = movieData;
+                moviesByTheater.sort(function (a, b) {
+                    var rc = 0;
+                    if (a.h < b.h) rc = -1
+                    if (a.h > b.h) rc = 1;
+                    return rc;
+
+                });
+
+                $("#thetable").remove();
+                createTable(moviesByTheater);
+
+            });
+
+            $("#content").on("click", "th#hdrTitle", function () {
+
+                var moviesByTitle = movieData;
+                moviesByTitle.sort(function (a, b) {
+                    var rc = 0;
+                    if (a.t < b.t) rc = -1
+                    if (a.t > b.t) rc = 1;
+                    return rc;
+
+                });
+
+                $("#thetable").remove();
+                createTable(moviesByTitle);
+
+            });
+
+            $("#btnSortTheater").on("click", function () {
+
+                var moviesByTheater = movieData;
+                moviesByTheater.sort(function (a, b) {
+                    var rc = 0;
+                    if (a.h < b.h) rc = -1
+                    if (a.h > b.h) rc = 1;
+                    return rc;
+
+                });
+
+                $("#thetable").remove();
+                createTable(moviesByTheater);
+
+            });
+
+            $("#btnSortTitle").on("click", function () {
+                var moviesByTheater = movieData;
+                moviesByTheater.sort(function (a, b) {
+                    var rc = 0;
+                    if (a.t < b.t) rc = -1
+                    if (a.t > b.t) rc = 1;
+                    
+                    return rc;
+                });
+
+                $("#thetable").remove();
+                createTable(moviesByTheater);
+
+            });
+
             $("#btnSubmit").on("click", function () {
 
                 var o = {
@@ -243,25 +311,33 @@
                         }
                         else
                         {
-                            $("#content").append(  "<table id='thetable' rules='all' border='1'>"
-                                +"<tr><th>cnt</th><th>time</th><th>rt</th>"
-                                +"<th width=400>movie</th><th>theater</th></tr></table>");
-                            $.each(data.MovieTimes,
-                                function (idx, aval) {
-                                    var arow = "<tr>" 
-                                        + "<td>" + idx + "</td>"
-                                        + "<td>" + aval.d + "</td>"
-                                        + "<td>" + aval.r + "</td>"
-                                        + "<td>" + aval.t + "</td>"
-                                        + "<td>" + aval.h + "</td>"
-                                        + "</tr>";
-                                    $("#thetable").append(arow);
+                            movieData = data.MovieTimes;
+                            //$("#thetable").remove();
 
-                                });
+                            createTable(data.MovieTimes);
+                           
                         }
                     } //end success function
                 }); //end ajax
             }); //end button on submit
+
+            function createTable(movies) {
+                $("#content").append("<table id='thetable' rules='all' border='1'>"
+                               + "<tr><th>cnt</th><th id='hdrTime'>time</th><th>rt</th>"
+                               + "<th id='hdrTitle' width=400>movie</th><th id='hdrTheater'>theater</th></tr></table>");
+                $.each(movies,
+                    function (idx, aval) {
+                        var arow = "<tr>"
+                            + "<td>" + idx + "</td>"
+                            + "<td>" + aval.d + "</td>"
+                            + "<td>" + aval.r + "</td>"
+                            + "<td>" + aval.t + "</td>"
+                            + "<td>" + aval.h + "</td>"
+                            + "</tr>";
+                        $("#thetable").append(arow);
+
+                    });
+            }
 
         }); //end doc ready
 

@@ -77,7 +77,7 @@ namespace WebApplication4.Controllers
                 }
 
                 //GenerateStats(allTimesSorted);
-                List<m.cTimesWithNameTheater> cAllMovies = CreateCompressedListing(allTimesSorted, cAllMovies);
+                List<m.cTimesWithNameTheater> cAllMovies = CreateCompressedListing(allTimesSorted);
 
                 int beginViewTime  = Convert.ToInt32(stq.viewBeginTime);
                 int endViewTime    = beginViewTime + Convert.ToInt32(stq.viewEndTime);

@@ -76,18 +76,8 @@ namespace WebApplication4.Controllers
                     int rc = PutMovieDataIntoDB(stq, allTimesSorted);
                 }
 
-                int totMovies = allTimesSorted.Count;
-
-                var grouped = allTimesSorted
-                    .GroupBy(x => ( x.title.Length < 20 ) ? x.title : x.title.Substring(0,20));
-
-                var groupCount = grouped
-                    .Select(x => new { mt = x.Key, 
-                        mtCnt = x.Count(),
-                        mtPercent = ((float)x.Count()*100 / totMovies).ToString("F")
-                    });
-                var groupCountOrderMT = groupCount.OrderBy(x => x.mt);
-                var groupCountOrderNum = groupCount.OrderByDescending(x => x.mtCnt);
+                //GenerateStats(allTimesSorted);
+                List<m.cTimesWithNameTheater> cAllMovies = CreateCompressedListing(allTimesSorted, cAllMovies);
 
                 int beginViewTime  = Convert.ToInt32(stq.viewBeginTime);
                 int endViewTime    = beginViewTime + Convert.ToInt32(stq.viewEndTime);
@@ -135,6 +125,77 @@ namespace WebApplication4.Controllers
             }
 
             return zz;
+
+        }
+
+        private List<m.cTimesWithNameTheater> CreateCompressedListing(List<m.TimesWithNameTheater> allTimesSorted)
+        {
+            List<m.cTimesWithNameTheater> cAllMovies = new List<m.cTimesWithNameTheater>();
+            string mTime = "";
+            string mTitle = "";
+
+            m.cTimesWithNameTheater currEntry = null;
+            foreach (m.TimesWithNameTheater amovie in allTimesSorted)
+            {
+
+                if (mTime != amovie.datetime)
+                {
+                    //new movie time, start new entry
+                    m.cTimesWithNameTheater cMovie = new m.cTimesWithNameTheater();
+                    cMovie.datetime = amovie.datetime;
+                    cMovie.title = amovie.title;
+                    cMovie.runTime = amovie.runTime;
+                    cMovie.theTheaters = new List<string>();
+                    cMovie.theTheaters.Add(amovie.theTheater);
+                    mTitle = amovie.title;
+                    mTime = amovie.datetime;
+                    cAllMovies.Add(cMovie);
+                    currEntry = cMovie;
+                }
+                else
+                {
+                    if (mTitle == amovie.title)
+                    {
+                        //same movie time, same movie, add to theaters of current entry
+                        currEntry.theTheaters.Add(amovie.theTheater);
+
+                    }
+                    else
+                    {
+                        //same movie time, different movie, create new entry
+                        m.cTimesWithNameTheater cMovie = new m.cTimesWithNameTheater();
+                        cMovie.datetime = amovie.datetime;
+                        cMovie.title = amovie.title;
+                        cMovie.runTime = amovie.runTime;
+                        cMovie.theTheaters = new List<string>();
+                        cMovie.theTheaters.Add(amovie.theTheater);
+                        mTitle = amovie.title;
+                        mTime = amovie.datetime;
+                        cAllMovies.Add(cMovie);
+                        currEntry = cMovie;
+                    }
+                }
+
+            }
+            return cAllMovies;
+        }
+
+        private static void GenerateStats(List<m.TimesWithNameTheater> allTimesSorted)
+        {
+            int totMovies = allTimesSorted.Count;
+
+            var grouped = allTimesSorted
+                .GroupBy(x => (x.title.Length < 20) ? x.title : x.title.Substring(0, 20));
+
+            var groupCount = grouped
+                .Select(x => new
+                {
+                    mt = x.Key,
+                    mtCnt = x.Count(),
+                    mtPercent = ((float)x.Count() * 100 / totMovies).ToString("F")
+                });
+            var groupCountOrderMT = groupCount.OrderBy(x => x.mt);
+            var groupCountOrderNum = groupCount.OrderByDescending(x => x.mtCnt);
 
         }
 

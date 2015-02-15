@@ -49,6 +49,13 @@ namespace movietimes
         [JsonProperty("r")]public string runTime { get; set; }
     }
 
+    public class cTimesWithNameTheater
+    {
+        [JsonProperty("d")]public string datetime { get; set; }
+        [JsonProperty("t")]public string title { get; set; }
+        [JsonProperty("r")]public string runTime { get; set; }
+        [JsonProperty("h")]public List<string> theTheaters { get; set; }
+    }
     public class Theatre
     {
         public Address address { get; set; }

@@ -54,6 +54,11 @@ namespace WebApplication4.Controllers
 
             try
             {
+                if ((String.IsNullOrEmpty(stq.viewDate) == true) || (String.IsNullOrEmpty(stq.viewZip) == true))
+                {
+                    throw new Exception("invalid input, no date and/or zip");
+                }
+
                 //get data from db
                 thedata = GetMovieDataFromDB(stq);
 
@@ -250,7 +255,8 @@ namespace WebApplication4.Controllers
 
             try
             {
-                string sql         = String.Format("select jsonData from rawJsonData where viewDate = '{0}' and viewZip = '{1}'", stq.viewDate, stq.viewZip);
+                string sql         = String.Format("select jsonData from rawJsonData where viewDate = '{0}' and viewZip = '{1}'"
+                                     , stq.viewDate, stq.viewZip);
                 string connStr     = ConfigurationManager.ConnectionStrings["MovieTimesConnectionString"].ConnectionString;
                 SqlConnection conn = new SqlConnection(connStr);
                 SqlCommand cmd     = new SqlCommand(sql, conn);

@@ -54,6 +54,11 @@ namespace WebApplication4.Controllers
 
             try
             {
+                if ((String.IsNullOrEmpty(stq.viewDate) == true) || (String.IsNullOrEmpty(stq.viewZip) == true))
+                {
+                    throw new Exception("invalid input, no date and/or zip");
+                }
+
                 //get data from db
                 thedata = GetMovieDataFromDB(stq);
 
@@ -294,7 +299,7 @@ namespace WebApplication4.Controllers
 
                 string sql         = String.Format("insert into rawJsonData(viewDate, viewZip, jsonData) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
                 SetUpSql(sql);
-
+                
                 rc = cmd.ExecuteNonQuery();
 
             }

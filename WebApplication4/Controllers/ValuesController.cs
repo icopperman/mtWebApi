@@ -244,20 +244,31 @@ namespace WebApplication4.Controllers
 
         }
 
+        public SqlCommand cmd;
+
+        private void SetUpSql(string sqlStatement)
+        {
+            //string connStr = ConfigurationManager.ConnectionStrings["MovieTimesConnectionString"].ConnectionString;
+            string connStr     = ConfigurationManager.ConnectionStrings["localdb"].ConnectionString;
+            SqlConnection conn = new SqlConnection(connStr);
+            cmd                = new SqlCommand(sqlStatement, conn);
+            cmd.CommandText    = sqlStatement;
+            cmd.CommandType    = CommandType.Text;
+    
+            conn.Open();
+
+        }
+
         private string GetMovieDataFromDB(m.ShowTimeReq stq)
         {
             string rawJson = "";
 
             try
             {
-                string sql         = String.Format("select jsonData from rawJsonData where viewDate = '{0}' and viewZip = '{1}'", stq.viewDate, stq.viewZip);
-                string connStr     = ConfigurationManager.ConnectionStrings["MovieTimesConnectionString"].ConnectionString;
-                SqlConnection conn = new SqlConnection(connStr);
-                SqlCommand cmd     = new SqlCommand(sql, conn);
+                string sql = String.Format("select jsonData from rawJsonData where viewDate = '{0}' and viewZip = '{1}'", stq.viewDate, stq.viewZip);
                 
-                conn.Open();
-                
-                Object o = cmd.ExecuteScalar();
+                SetUpSql(sql);
+                Object o   = cmd.ExecuteScalar();
                 
                 if (o != null) rawJson = o.ToString();
 
@@ -280,14 +291,10 @@ namespace WebApplication4.Controllers
             try
             {
                 string rawJson     = ns.JsonConvert.SerializeObject(allTimeSorted);
+
                 string sql         = String.Format("insert into rawJsonData(viewDate, viewZip, jsonData) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
-                string connStr     = ConfigurationManager.ConnectionStrings["MovieTimesConnectionString"].ConnectionString;
-                SqlConnection conn = new SqlConnection(connStr);
-                SqlCommand cmd     = new SqlCommand(sql, conn);
-                cmd.CommandText    = sql;
-                cmd.CommandType    = CommandType.Text;
-                
-                conn.Open();
+                SetUpSql(sql);
+
                 rc = cmd.ExecuteNonQuery();
 
             }

@@ -7,6 +7,7 @@
         input { width: 100px;   }
     </style>
     <script src="Scripts/jquery-2.1.3.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.5.0/lodash.js"></script>
 </head>
 <body>
     <form id="form1" >
@@ -313,28 +314,74 @@
                         {
                             movieData = data.MovieTimes;
                             //$("#thetable").remove();
-
-                            createTable(data.MovieTimes);
+                         
+                            createTable1(data.MovieTimes);
                            
                         }
                     } //end success function
                 }); //end ajax
             }); //end button on submit
 
-            function createTable(movies) {
-                $("#content").append("<table id='thetable' rules='all' border='1'>"
-                               + "<tr><th>cnt</th><th id='hdrTime'>time</th><th>rt</th>"
-                               + "<th id='hdrTitle' width=400>movie</th><th id='hdrTheater'>theater</th></tr></table>");
-                $.each(movies,
-                    function (idx, aval) {
-                        var arow = "<tr>"
-                            + "<td>" + idx + "</td>"
-                            + "<td>" + aval.d + "</td>"
-                            + "<td>" + aval.r + "</td>"
-                            + "<td>" + aval.t + "</td>"
-                            + "<td>" + aval.h + "</td>"
+            function createTable1(movies) {
+                $("#content").append("<div style='float:left;'><table id='thetable' rules='all' border='1'>"
+                               + "<tr><th>#</th><th>Time</th><th>Movies</th>"
+                               + "</tr></table></div>");
+                moviesByTime = _.groupBy(movies, function (amovie) {
+                    return amovie.d;
+                });
+
+                var cnt = 1;
+
+                _.forEach(moviesByTime,
+                    function (moviesAtTime, keyTime, allMovies) {
+                        var arow = "<tr key='" + keyTime + "' >"
+                            + "<td>" + cnt + "</td>"
+                            + "<td>" + keyTime + "</td>"
+                            + "<td>" + moviesAtTime.length + " movies at this time</td>"
                             + "</tr>";
                         $("#thetable").append(arow);
+                        cnt++;
+
+
+                    });
+            }
+
+            $("#content" ).on("click", "tr", function () {
+                var thetr = this;
+                var key = $(thetr).attr('key');
+                var data = moviesByTime[key];
+                createTable(data, key);
+                console.log('here');
+            })
+
+            $("#content").on("mouseenter", "tr", function () {
+                var thetr = this;
+                var key = $(thetr).attr('key');
+                var data = moviesByTime[key];
+                createTable(data, key);
+                console.log('here');
+            })
+            $("#content").on("mouseleave", "tr", function () {
+                $("#thetable2").remove();
+                console.log('here');
+            })
+
+            function createTable(movies, key) {
+                $("#thetable2").remove();
+                $("#content").append("<div  style='float:left; margin-left: 10px;' ><table id='thetable2' rules='all' border='1'>"
+                               + "<tr><th>#</th>"
+                               + "<th id='hdrTitle' width=400>" + movies.length + " movies at " + key
+                               + "</th><th id='hdrTheater'>theater</th><th>rt</th></tr></table></div>");
+                $.each(movies,
+                    function (idx, aval) {
+                        idx++;
+                        var arow = "<tr>"
+                            + "<td>" + idx + "</td>"
+                            + "<td>" + aval.t + "</td>"
+                            + "<td>" + aval.h + "</td>"
+                            + "<td>" + aval.r + "</td>"
+                            + "</tr>";
+                        $("#thetable2").append(arow);
 
                     });
             }

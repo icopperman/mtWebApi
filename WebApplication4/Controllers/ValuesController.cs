@@ -253,8 +253,8 @@ namespace WebApplication4.Controllers
 
         private void SetUpSql(string sqlStatement)
         {
-            //string connStr = ConfigurationManager.ConnectionStrings["MovieTimesConnectionString"].ConnectionString;
-            string connStr     = ConfigurationManager.ConnectionStrings["localdb"].ConnectionString;
+            string connStr = ConfigurationManager.ConnectionStrings["MovieTimesConnectionString"].ConnectionString;
+            //string connStr     = ConfigurationManager.ConnectionStrings["localdb"].ConnectionString;
             SqlConnection conn = new SqlConnection(connStr);
             cmd                = new SqlCommand(sqlStatement, conn);
             cmd.CommandText    = sqlStatement;

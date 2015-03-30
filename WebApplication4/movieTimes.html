@@ -29,6 +29,8 @@
             <input type="text" id="titlestartsWith" name="titlestartsWith"  />
             <input type="text" id="timeZone" name="timeZone"  />
             <input type="button" id="btnSubmit" name="btnSubmit"  value="Find Time" />
+            <input type="button" id="btnSubmit1" name="btnSubmit1" value="Find Time1" />
+
             <input type="button" id="btnSortTitle" name="btnSortTitle" value="Sort by Title" />
             <input type="button" id="btnSortTheater" name="btnSortTheater" value="Sort by Theater" />
 
@@ -64,39 +66,10 @@
             var geoOptions = { enableHighAccuracy: false, timeout: 300000, maximumAge: 0 };
             window.navigator.geolocation.getCurrentPosition(geoOK, geoError, geoOptions);
 
-            function updateLoadDiv()
+            function geoError(err) 
             {
-                var currsecs = $("#acnt").text();
-                var secs = parseInt(currsecs, 10) + 1;
-                $("#acnt").text(secs);
-
-            };
-
-            function cbOK1(pos)
-            {
-                var lat = pos.coords.latitude;
-                var long = pos.coords.longitude;
-                var geo = new google.maps.Geocoder();
-                var xlatlng = new google.maps.LatLng(lat, long);
-                geo.geocode(
-                    {
-                        location: xlatlng
-                        //,componentRestrictions: {
-                        //    "administrativeArea": ""
-                        //    , "locality": ""
-                        //}
-                       //,locationType: "APPROXIMATE"
-                       // ,'key': "AIzaSyCA2po6hq5ExEWRqQbDH6hI34fJfA9rEVo"
-                       // ,'result_type': "postal_code"
-
-                    },
-                    function (results, status) {
-                    if (status == google.maps.GeocoderStatus.OK) {
-                        alert("okkkkkkkk");
-                    } else {
-                        alert('Geocoderkkkkkk failed due to: ' + status);
-                    }
-                });
+                var acode = err.code;
+                console.log("geolocate error " + acode);
             }
 
             function geoOK(pos)
@@ -107,8 +80,7 @@
                 console.log("geolocation complete ok");
 
                 $.ajax("https://maps.googleapis.com/maps/api/geocode/json",
-                {
-                    
+                {   
                     type: "GET",
                     //contentType: "application/json",
                     //dataType: "jsonp",
@@ -183,76 +155,49 @@
                 });
             }
 
-            function geoError(err) 
+            function updateLoadDiv()
             {
-                var acode = err.code;
-                console.log("geolocate error " + acode);
-            }
+                var currsecs = $("#acnt").text();
+                var secs = parseInt(currsecs, 10) + 1;
+                $("#acnt").text(secs);
+            };
 
-            $("#content").on("click", "th#hdrTheater", function () {
+            function sortMovies(event) 
+            {
+                var type = event.data;
 
-                var moviesByTheater = movieData;
-                moviesByTheater.sort(function (a, b) {
+                var sortedMovies = movieData;
+                sortedMovies.sort(function (a, b) 
+                {
                     var rc = 0;
-                    if (a.h < b.h) rc = -1
-                    if (a.h > b.h) rc = 1;
-                    return rc;
+                    var asortVal, bsortVal;
 
-                });
-
-                $("#thetable").remove();
-                createTable(moviesByTheater);
-
-            });
-
-            $("#content").on("click", "th#hdrTitle", function () {
-
-                var moviesByTitle = movieData;
-                moviesByTitle.sort(function (a, b) {
-                    var rc = 0;
-                    if (a.t < b.t) rc = -1
-                    if (a.t > b.t) rc = 1;
-                    return rc;
-
-                });
-
-                $("#thetable").remove();
-                createTable(moviesByTitle);
-
-            });
-
-            $("#btnSortTheater").on("click", function () {
-
-                var moviesByTheater = movieData;
-                moviesByTheater.sort(function (a, b) {
-                    var rc = 0;
-                    if (a.h < b.h) rc = -1
-                    if (a.h > b.h) rc = 1;
-                    return rc;
-
-                });
-
-                $("#thetable").remove();
-                createTable(moviesByTheater);
-
-            });
-
-            $("#btnSortTitle").on("click", function () {
-                var moviesByTheater = movieData;
-                moviesByTheater.sort(function (a, b) {
-                    var rc = 0;
-                    if (a.t < b.t) rc = -1
-                    if (a.t > b.t) rc = 1;
+                    if ( type == "theater") { asortVal = a.h; bsortVal = b.h; }
+                    else                   { asortVal = a.t; bsortVal = b.t; }
+                    
+                    if (asortVal < bsortVal) rc = -1
+                    if (asortVal > bsortVal) rc = 1;
                     
                     return rc;
+
                 });
 
-                $("#thetable").remove();
-                createTable(moviesByTheater);
+                $("#basetable").remove();
+                createTable(sortedMovies);
 
-            });
+            }
 
-            $("#btnSubmit").on("click", function () {
+            $("#content").on("click", "th#hdrTheater", "theater", sortMovies);
+            $("#btnSortTheater").on("click", "theater", sortMovies);
+            $("#content").on("click", "th#hdrTitle", "title", sortMovies);
+            $("#btnSortTitle").on("click", "title", sortMovies);
+
+            $("#btnSubmit").on("click", 1, getTheMovies);
+            $("#btnSubmit1").on("click", 2, getTheMovies);
+            
+            function getTheMovies(event) {
+
+                var type = event.data;
 
                 var o = {
                     viewDate: $("#viewdate").val(),
@@ -268,7 +213,7 @@
 
                 var oo = JSON.stringify(o);
 
-                $("#thetable").remove();
+                $("#basetable").remove();
                 
                 var mtURL = "http://" + window.location.host + "/api/values";
                 //var mtURL = "http://emptywebapiazure.azurewebsites.net/api/values";
@@ -313,22 +258,40 @@
                         else
                         {
                             movieData = data.MovieTimes;
-                            //$("#thetable").remove();
-                         
-                            createTable1(data.MovieTimes);
+                            //$("#basetable").remove();
+                            if (type == 1) createTable(data.MovieTimes);
+                            else createBaseTable(data.MovieTimes);
                            
                         }
                     } //end success function
                 }); //end ajax
-            }); //end button on submit
+            } //end button on submit
 
-            function createTable1(movies) {
-                $("#content").append("<div style='float:left;'><table id='thetable' rules='all' border='1'>"
-                               + "<tr><th>#</th><th>Time</th><th>Movies</th>"
-                               + "</tr></table></div>");
-                moviesByTime = _.groupBy(movies, function (amovie) {
-                    return amovie.d;
-                });
+            function createTable(movies) {
+                $("#content").append("<table id='basetable' rules='all' border='1'>"
+                               + "<tr><th>cnt</th><th id='hdrTime'>time</th><th>rt</th>"
+                               + "<th id='hdrTitle' width=400>movie</th><th id='hdrTheater'>theater</th></tr></table>");
+                $.each(movies,
+                    function (idx, aval) {
+                        var arow = "<tr>"
+                            + "<td>" + idx + "</td>"
+                            + "<td>" + aval.d + "</td>"
+                            + "<td>" + aval.r + "</td>"
+                            + "<td>" + aval.t + "</td>"
+                            + "<td>" + aval.h + "</td>"
+                            + "</tr>";
+                        $("#basetable").append(arow);
+
+                    });
+            }
+
+            function createBaseTable(movies) {
+
+                $("#content").append("<div style='float:left;'>"
+                               + "<table id='basetable' rules='all' border='1'>"
+                               + "<tr><th>#</th><th>Time</th><th>Movies</th></tr>"
+                               + "</table></div>");
+                moviesByTime = _.groupBy(movies, function (amovie) { return amovie.d; });
 
                 var cnt = 1;
 
@@ -339,39 +302,39 @@
                             + "<td>" + keyTime + "</td>"
                             + "<td>" + moviesAtTime.length + " movies at this time</td>"
                             + "</tr>";
-                        $("#thetable").append(arow);
+                        $("#basetable").append(arow);
                         cnt++;
-
-
                     });
+
+                $("#content").on("click", "tr", function () {
+                    var thetr = this;
+                    var key = $(thetr).attr('key');
+                    var data = moviesByTime[key];
+                    createSideTable(data, key);
+                    console.log('here');
+                })
+
+                $("#content").on("mouseenter", "tr", function () {
+                    var thetr = this;
+                    var key = $(thetr).attr('key');
+                    var data = moviesByTime[key];
+                    createSideTable(data, key);
+                    console.log('here');
+                })
+                $("#content").on("mouseleave", "tr", function () {
+                    $("#sidetable").remove();
+                    console.log('here');
+                })
             }
 
-            $("#content" ).on("click", "tr", function () {
-                var thetr = this;
-                var key = $(thetr).attr('key');
-                var data = moviesByTime[key];
-                createTable(data, key);
-                console.log('here');
-            })
-
-            $("#content").on("mouseenter", "tr", function () {
-                var thetr = this;
-                var key = $(thetr).attr('key');
-                var data = moviesByTime[key];
-                createTable(data, key);
-                console.log('here');
-            })
-            $("#content").on("mouseleave", "tr", function () {
-                $("#thetable2").remove();
-                console.log('here');
-            })
-
-            function createTable(movies, key) {
-                $("#thetable2").remove();
-                $("#content").append("<div  style='float:left; margin-left: 10px;' ><table id='thetable2' rules='all' border='1'>"
+            function createSideTable(movies, key) {
+                $("#sidetable").remove();
+                $("#content").append("<div  style='float:left; margin-left: 10px;' >" 
+                               + "<table id='sidetable' rules='all' border='1'>"
                                + "<tr><th>#</th>"
                                + "<th id='hdrTitle' width=400>" + movies.length + " movies at " + key
-                               + "</th><th id='hdrTheater'>theater</th><th>rt</th></tr></table></div>");
+                               + "</th><th id='hdrTheater'>theater</th><th>rt</th></tr>" 
+                               + "</table></div>");
                 $.each(movies,
                     function (idx, aval) {
                         idx++;
@@ -381,11 +344,101 @@
                             + "<td>" + aval.h + "</td>"
                             + "<td>" + aval.r + "</td>"
                             + "</tr>";
-                        $("#thetable2").append(arow);
+                        $("#sidetable").append(arow);
 
                     });
             }
 
+            //function cbOK1(pos)
+            //{
+            //    var lat = pos.coords.latitude;
+            //    var long = pos.coords.longitude;
+            //    var geo = new google.maps.Geocoder();
+            //    var xlatlng = new google.maps.LatLng(lat, long);
+            //    geo.geocode(
+            //        {
+            //            location: xlatlng
+            //            //,componentRestrictions: {
+            //            //    "administrativeArea": ""
+            //            //    , "locality": ""
+            //            //}
+            //           //,locationType: "APPROXIMATE"
+            //           // ,'key': "AIzaSyCA2po6hq5ExEWRqQbDH6hI34fJfA9rEVo"
+            //           // ,'result_type': "postal_code"
+
+            //        },
+            //        function (results, status) {
+            //        if (status == google.maps.GeocoderStatus.OK) {
+            //            alert("okkkkkkkk");
+            //        } else {
+            //            alert('Geocoderkkkkkk failed due to: ' + status);
+            //        }
+            //    });
+            //}
+
+            //$("#content").on("click", "th#hdrTheater", function () {
+
+            //    var moviesByTheater = movieData;
+            //    moviesByTheater.sort(function (a, b) {
+            //        var rc = 0;
+            //        if (a.h < b.h) rc = -1
+            //        if (a.h > b.h) rc = 1;
+            //        return rc;
+
+            //    });
+
+            //    $("#basetable").remove();
+            //    createTable(moviesByTheater);
+
+            //});
+
+            //$("#btnSortTheater").on("click", function () {
+
+            //    var moviesByTheater = movieData;
+            //    moviesByTheater.sort(function (a, b) {
+            //        var rc = 0;
+            //        if (a.h < b.h) rc = -1
+            //        if (a.h > b.h) rc = 1;
+            //        return rc;
+
+            //    });
+
+            //    $("#basetable").remove();
+            //    createTable(moviesByTheater);
+
+            //});
+
+            //$("#content").on("click", "th#hdrTitle", function () {
+
+            //    var moviesByTitle = movieData;
+            //    moviesByTitle.sort(function (a, b) {
+            //        var rc = 0;
+            //        if (a.t < b.t) rc = -1
+            //        if (a.t > b.t) rc = 1;
+            //        return rc;
+
+            //    });
+
+            //    $("#basetable").remove();
+            //    createTable(moviesByTitle);
+
+            //});
+
+
+            //$("#btnSortTitle").on("click", function () {
+            //    var moviesByTheater = movieData;
+            //    moviesByTheater.sort(function (a, b) {
+            //        var rc = 0;
+            //        if (a.t < b.t) rc = -1
+            //        if (a.t > b.t) rc = 1;
+
+            //        return rc;
+            //    });
+
+            //    $("#basetable").remove();
+            //    createTable(moviesByTheater);
+
+            //});
         }); //end doc ready
 
     </script> 

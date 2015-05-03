@@ -207,6 +207,13 @@ namespace WebApplication4.Controllers
         private List<m.TimesWithNameTheater> ReorgTheDataByTime(string thedata)
         {   
             List<m.Movie> themovies                    = new List<m.Movie>();
+            List<string> xtheaterNames                 = new List<string>();
+            List<string> theaterNames                  = new List<string>();
+            List<string> xmovieNames                   = new List<string>();
+            List<string> xxmovieNames                  = new List<string>();
+            List<m.MovieNameObj> movieNames            = new List<m.MovieNameObj>();
+
+            List<m.MovieTime> movieTimes               = new List<m.MovieTime>();
             List<m.TimesWithNameTheater> allTimes      = new List<m.TimesWithNameTheater>();
             List<m.TimesWithNameTheater> allTimeSorted = new List<m.TimesWithNameTheater>();
 
@@ -229,13 +236,46 @@ namespace WebApplication4.Controllers
 
                         allTimes.Add(twnt);
 
+                        if (xtheaterNames.Contains(twnt.theTheater) == false)
+                        {
+                            xtheaterNames.Add(twnt.theTheater);
+                        }
+
+                        string xx = twnt.title + "|" + twnt.runTime;
+
+                        if (xxmovieNames.Contains(xx) == false)
+                        {
+                            xxmovieNames.Add(xx);
+                        }
+
                     }
                 }
 
+                theaterNames = xtheaterNames.Distinct().ToList();
+                xmovieNames = xxmovieNames.Distinct().ToList();
+                movieNames = xmovieNames
+                    .Select(amovie => new m.MovieNameObj { movieName = amovie.Split('|')[0], runTime = amovie.Split('|')[1] })
+                    .ToList();
+                
                 allTimeSorted = allTimes
                        .OrderBy(mt => mt.datetime)
                        .ThenBy(mt => mt.title)
                        .ToList();
+
+                foreach (m.TimesWithNameTheater twnt in allTimeSorted)
+                {
+                    m.MovieTime amt = new m.MovieTime();
+
+                    int theaterNameIdx = theaterNames.FindIndex(atheaterName => atheaterName == twnt.theTheater);
+                    int movieNameidx   = movieNames.FindIndex(amovieObj => amovieObj.movieName == twnt.title);
+                    
+                    amt.showtime = twnt.title;
+                    amt.movieNameIdx = movieNameidx.ToString();
+                    amt.theaterNameIdx = theaterNameIdx.ToString();
+
+                    movieTimes.Add(amt);
+                   
+                }
 
             }
             catch (Exception ex)

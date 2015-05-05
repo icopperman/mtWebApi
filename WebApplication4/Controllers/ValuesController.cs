@@ -40,6 +40,10 @@ namespace WebApplication4.Controllers
             }
 
             mr.MovieTimes = xx;
+            mr.movieNames = movieNames;
+            mr.movieTimesIdx = movieTimes;
+            mr.theaterNames = theaterNames;
+
             return mr; 
 
         }
@@ -67,7 +71,10 @@ namespace WebApplication4.Controllers
                 {
                     mr.Source = "db";
                     //deseiralize data back from db
-                    allTimesSorted = ns.JsonConvert.DeserializeObject<List<m.TimesWithNameTheater>>(thedata);
+                    allTimesSorted = ns.JsonConvert.DeserializeObject<List<m.TimesWithNameTheater>>(rawJson1);
+                    movieNames     = ns.JsonConvert.DeserializeObject<List<m.MovieNameObj>>(rawJson2);
+                    theaterNames   = ns.JsonConvert.DeserializeObject<List<string>>(rawJson3);
+                    movieTimes     = ns.JsonConvert.DeserializeObject<List<m.MovieTime>>(rawJson4);
                 }
                 else
                 {
@@ -270,7 +277,7 @@ namespace WebApplication4.Controllers
                     int theaterNameIdx = theaterNames.FindIndex(atheaterName => atheaterName == twnt.theTheater);
                     int movieNameidx   = movieNames.FindIndex(amovieObj => amovieObj.movieName == twnt.title);
                     
-                    amt.showtime = twnt.title;
+                    amt.showtime = twnt.datetime;
                     amt.movieNameIdx = movieNameidx.ToString();
                     amt.theaterNameIdx = theaterNameIdx.ToString();
 
@@ -294,8 +301,8 @@ namespace WebApplication4.Controllers
 
         private void SetUpSql(string sqlStatement)
         {
-            string connStr = ConfigurationManager.ConnectionStrings["MovieTimesConnectionString"].ConnectionString;
-            //string connStr     = ConfigurationManager.ConnectionStrings["localdb"].ConnectionString;
+            //string connStr = ConfigurationManager.ConnectionStrings["MovieTimesConnectionString"].ConnectionString;
+            string connStr     = ConfigurationManager.ConnectionStrings["localdb"].ConnectionString;
             SqlConnection conn = new SqlConnection(connStr);
             cmd                = new SqlCommand(sqlStatement, conn);
             cmd.CommandText    = sqlStatement;
@@ -305,18 +312,34 @@ namespace WebApplication4.Controllers
 
         }
 
+        public string rawJson1, rawJson2, rawJson3, rawJson4;
+        
         private string GetMovieDataFromDB(m.ShowTimeReq stq)
         {
-            string rawJson = "";
 
             try
             {
-                string sql = String.Format("select jsonData from rawJsonData where viewDate = '{0}' and viewZip = '{1}'", stq.viewDate, stq.viewZip);
+                string sql1 = String.Format("select jsonData      from rawJsonData  where viewDate = '{0}' and viewZip = '{1}'", stq.viewDate, stq.viewZip);
+                string sql2 = String.Format("select movieNames    from movieNames   where viewDate = '{0}' and viewZip = '{1}'", stq.viewDate, stq.viewZip);
+                string sql3 = String.Format("select theaterNames  from theaterNames where viewDate = '{0}' and viewZip = '{1}'", stq.viewDate, stq.viewZip);
+                string sql4 = String.Format("select movieShowings from movieTimes   where viewDate = '{0}' and viewZip = '{1}'", stq.viewDate, stq.viewZip);
                 
-                SetUpSql(sql);
+                SetUpSql(sql1);
                 Object o   = cmd.ExecuteScalar();
+                if (o != null) rawJson1 = o.ToString();
+
+                SetUpSql(sql2);
+                o = cmd.ExecuteScalar();
+                if (o != null) rawJson2 = o.ToString();
                 
-                if (o != null) rawJson = o.ToString();
+                SetUpSql(sql3);
+                o = cmd.ExecuteScalar();
+                if (o != null) rawJson3 = o.ToString();
+                
+                SetUpSql(sql4);
+                o = cmd.ExecuteScalar();
+                if (o != null) rawJson4 = o.ToString();
+
 
             }
             catch (Exception ex)
@@ -326,7 +349,7 @@ namespace WebApplication4.Controllers
                 throw ex;
             }
 
-            return rawJson;
+            return rawJson1;
 
         }
 
@@ -354,7 +377,7 @@ namespace WebApplication4.Controllers
                 rc = cmd.ExecuteNonQuery();
 
                 rawJson = ns.JsonConvert.SerializeObject(movieTimes);
-                sql = String.Format("insert into movieTimes(viewDate, viewZip, movieNames) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
+                sql = String.Format("insert into movieTimes(viewDate, viewZip, movieShowings) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
                 SetUpSql(sql);
                 rc = cmd.ExecuteNonQuery();
 

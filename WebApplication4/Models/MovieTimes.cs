@@ -55,7 +55,7 @@ namespace movietimes
 
         public List<MovieNameObj> movieNames { get; set; }
         public List<string> theaterNames { get; set; }
-        public List<MovieTime> movieTimes { get; set; }
+        public List<MovieTime> movieTimesIdx { get; set; }
 
     }
 

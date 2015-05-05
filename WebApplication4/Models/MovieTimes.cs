@@ -34,15 +34,15 @@ namespace movietimes
 
     public class MovieTime
     {
-        public string movieNameIdx { get; set; }
-        public string theaterNameIdx { get; set; }
-        public string showtime;
+        [JsonProperty("m")]public string movieNameIdx { get; set; }
+        [JsonProperty("t")]public string theaterNameIdx { get; set; }
+        [JsonProperty("s")]public string showtime;
     }
     
     public class MovieNameObj
     {
-        public string movieName { get; set; }
-        public string runTime;
+        [JsonProperty("m")]public string movieName { get; set; }
+        [JsonProperty("r")]public string runTime;
     }
 
     public class MovieResults

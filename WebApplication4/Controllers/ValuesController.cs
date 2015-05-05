@@ -204,16 +204,17 @@ namespace WebApplication4.Controllers
 
         }
 
+        public List<string> theaterNames                  = new List<string>();
+        public List<m.MovieNameObj> movieNames            = new List<m.MovieNameObj>();
+        public List<m.MovieTime> movieTimes               = new List<m.MovieTime>();
+
         private List<m.TimesWithNameTheater> ReorgTheDataByTime(string thedata)
         {   
             List<m.Movie> themovies                    = new List<m.Movie>();
             List<string> xtheaterNames                 = new List<string>();
-            List<string> theaterNames                  = new List<string>();
             List<string> xmovieNames                   = new List<string>();
             List<string> xxmovieNames                  = new List<string>();
-            List<m.MovieNameObj> movieNames            = new List<m.MovieNameObj>();
 
-            List<m.MovieTime> movieTimes               = new List<m.MovieTime>();
             List<m.TimesWithNameTheater> allTimes      = new List<m.TimesWithNameTheater>();
             List<m.TimesWithNameTheater> allTimeSorted = new List<m.TimesWithNameTheater>();
 
@@ -332,15 +333,33 @@ namespace WebApplication4.Controllers
         private int PutMovieDataIntoDB(m.ShowTimeReq stq, List<m.TimesWithNameTheater> allTimeSorted)
         {
             int rc = -1;
+            string rawJson = "";
+            string sql = "";
 
             try
             {
-                string rawJson     = ns.JsonConvert.SerializeObject(allTimeSorted);
-
-                string sql         = String.Format("insert into rawJsonData(viewDate, viewZip, jsonData) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
+                rawJson = ns.JsonConvert.SerializeObject(allTimeSorted);
+                sql = String.Format("insert into rawJsonData(viewDate, viewZip, jsonData) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
                 SetUpSql(sql);
-                
                 rc = cmd.ExecuteNonQuery();
+
+                rawJson = ns.JsonConvert.SerializeObject(movieNames);
+                sql = String.Format("insert into movieNames(viewDate, viewZip, movieNames) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
+                SetUpSql(sql);
+                rc = cmd.ExecuteNonQuery();
+
+                rawJson = ns.JsonConvert.SerializeObject(theaterNames);
+                sql = String.Format("insert into theaterNames(viewDate, viewZip, theaterNames) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
+                SetUpSql(sql);
+                rc = cmd.ExecuteNonQuery();
+
+                rawJson = ns.JsonConvert.SerializeObject(movieTimes);
+                sql = String.Format("insert into movieTimes(viewDate, viewZip, movieNames) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
+                SetUpSql(sql);
+                rc = cmd.ExecuteNonQuery();
+
+
+
 
             }
             catch (Exception ex)

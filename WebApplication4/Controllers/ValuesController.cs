@@ -91,33 +91,33 @@ namespace WebApplication4.Controllers
                 //GenerateStats(allTimesSorted);
                 List<m.cTimesWithNameTheater> cAllMovies = CreateCompressedListing(allTimesSorted);
 
-                int beginViewTime  = Convert.ToInt32(stq.viewBeginTime);
-                int endViewTime    = beginViewTime + Convert.ToInt32(stq.viewEndTime);
-                int movieBeginTime = 0;
+                //int beginViewTime  = Convert.ToInt32(stq.viewBeginTime);
+                //int endViewTime    = beginViewTime + Convert.ToInt32(stq.viewEndTime);
+                //int movieBeginTime = 0;
 
                 foreach (m.TimesWithNameTheater xx in allTimesSorted)
                 {
-                    movieBeginTime = Convert.ToInt32(xx.datetime.Substring(0, 2));
+                    //movieBeginTime = Convert.ToInt32(xx.datetime.Substring(0, 2));
 
-                    if (String.IsNullOrEmpty(stq.viewBeginTime) == false)
-                    {
-                        //ignore entry if moviebegin time is before time user is interested in
-                        if (movieBeginTime < beginViewTime) continue;
-                    }
+                    //if (String.IsNullOrEmpty(stq.viewBeginTime) == false)
+                    //{
+                    //    //ignore entry if moviebegin time is before time user is interested in
+                    //    if (movieBeginTime < beginViewTime) continue;
+                    //}
 
-                    //is there a duration specified?
-                    if (String.IsNullOrEmpty(stq.viewEndTime) == false)
-                    {
-                        //yes....ignore entry if moviebegin time is after time user is interested in
+                    ////is there a duration specified?
+                    //if (String.IsNullOrEmpty(stq.viewEndTime) == false)
+                    //{
+                    //    //yes....ignore entry if moviebegin time is after time user is interested in
 
-                        if (movieBeginTime > endViewTime) continue;
-                    }
+                    //    if (movieBeginTime > endViewTime) continue;
+                    //}
 
-                    //
-                    if (String.IsNullOrEmpty(stq.titleStartsWith) == false)
-                    {
-                        if (xx.title.ToLower().StartsWith(stq.titleStartsWith) == false) continue;
-                    }
+                    ////
+                    //if (String.IsNullOrEmpty(stq.titleStartsWith) == false)
+                    //{
+                    //    if (xx.title.ToLower().StartsWith(stq.titleStartsWith) == false) continue;
+                    //}
 
                     filteredTimes.Add(xx);
 

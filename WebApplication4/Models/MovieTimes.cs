@@ -6,11 +6,11 @@ using System.Web;
 
 namespace movietimes
 {
-    public class MovieTimes
-    {
-        List<Movie> allMovies;
+    //public class MovieTimes
+    //{
+    //    List<Movie> allMovies;
 
-    }
+    //}
     
     public class ShowTimeReq
     {
@@ -51,7 +51,7 @@ namespace movietimes
         public string Source { get; set; }
         public List<string> ErrMessage { get; set; }
         
-        public List<TimesWithNameTheater> MovieTimes { get; set; }
+        //public List<TimesWithNameTheater> MovieTimes { get; set; }
 
         public List<MovieNameObj> movieNames { get; set; }
         public List<string> theaterNames { get; set; }

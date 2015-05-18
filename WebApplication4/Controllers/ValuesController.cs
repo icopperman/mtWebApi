@@ -16,7 +16,13 @@ namespace WebApplication4.Controllers
 {
     public class ValuesController : ApiController
     {
-        public m.MovieResults mr = new m.MovieResults();
+        public SqlCommand cmd;
+        public string rawJson1, rawJson2, rawJson3, rawJson4;
+
+        public m.MovieResults mr               = new m.MovieResults();
+        public List<string> theaterNames       = new List<string>();
+        public List<m.MovieNameObj> movieNames = new List<m.MovieNameObj>();
+        public List<m.MovieTime> movieTimes    = new List<m.MovieTime>();
 
         // GET api/values
         [HttpGet]
@@ -26,11 +32,11 @@ namespace WebApplication4.Controllers
             mr.Status = "ok";
             mr.ErrMessage = new List<string>();
 
-            List<m.TimesWithNameTheater> xx = new List<m.TimesWithNameTheater>();
+            //List<m.TimesWithNameTheater> xx = new List<m.TimesWithNameTheater>();
 
             try
             {
-                xx = getTheData(stq);
+                getTheData(stq);
 
             }
             catch (Exception ex)
@@ -39,7 +45,7 @@ namespace WebApplication4.Controllers
                 mr.ErrMessage.Add(ex.Message + ", " + ex.StackTrace);
             }
 
-            mr.MovieTimes = xx;
+            //mr.MovieTimes = xx;
             mr.movieNames = movieNames;
             mr.movieTimesIdx = movieTimes;
             mr.theaterNames = theaterNames;
@@ -48,13 +54,13 @@ namespace WebApplication4.Controllers
 
         }
 
-        private List<m.TimesWithNameTheater> getTheData(m.ShowTimeReq stq)
+        private void getTheData(m.ShowTimeReq stq)
         {   
             string thedata = "";
             
             List<m.TimesWithNameTheater> allTimesSorted = new List<m.TimesWithNameTheater>();
-            List<m.TimesWithNameTheater> filteredTimes  = new List<m.TimesWithNameTheater>();
-            List<m.TimesWithNameTheater> zz             = new List<m.TimesWithNameTheater>();
+            //List<m.TimesWithNameTheater> filteredTimes  = new List<m.TimesWithNameTheater>();
+            //List<m.TimesWithNameTheater> zz             = new List<m.TimesWithNameTheater>();
 
             try
             {
@@ -71,7 +77,7 @@ namespace WebApplication4.Controllers
                 {
                     mr.Source = "db";
                     //deseiralize data back from db
-                    allTimesSorted = ns.JsonConvert.DeserializeObject<List<m.TimesWithNameTheater>>(rawJson1);
+                    //allTimesSorted = ns.JsonConvert.DeserializeObject<List<m.TimesWithNameTheater>>(rawJson1);
                     movieNames     = ns.JsonConvert.DeserializeObject<List<m.MovieNameObj>>(rawJson2);
                     theaterNames   = ns.JsonConvert.DeserializeObject<List<string>>(rawJson3);
                     movieTimes     = ns.JsonConvert.DeserializeObject<List<m.MovieTime>>(rawJson4);
@@ -82,21 +88,21 @@ namespace WebApplication4.Controllers
                     thedata = GetMovieDataFromWeb(stq);
                     mr.Source = "web";
                     //reorg data by movie show time, leaves out alot of extraneous info
-                    allTimesSorted = ReorgTheDataByTime(thedata);
+                    ReorgTheDataByTime(thedata);
 
                     //put reorg'ed, filtered data to db
-                    int rc = PutMovieDataIntoDB(stq, allTimesSorted);
+                    int rc = PutMovieDataIntoDB(stq);
                 }
 
                 //GenerateStats(allTimesSorted);
-                List<m.cTimesWithNameTheater> cAllMovies = CreateCompressedListing(allTimesSorted);
+                //List<m.cTimesWithNameTheater> cAllMovies = CreateCompressedListing(allTimesSorted);
 
                 //int beginViewTime  = Convert.ToInt32(stq.viewBeginTime);
                 //int endViewTime    = beginViewTime + Convert.ToInt32(stq.viewEndTime);
                 //int movieBeginTime = 0;
 
-                foreach (m.TimesWithNameTheater xx in allTimesSorted)
-                {
+                //foreach (m.TimesWithNameTheater xx in allTimesSorted)
+                //{
                     //movieBeginTime = Convert.ToInt32(xx.datetime.Substring(0, 2));
 
                     //if (String.IsNullOrEmpty(stq.viewBeginTime) == false)
@@ -119,14 +125,14 @@ namespace WebApplication4.Controllers
                     //    if (xx.title.ToLower().StartsWith(stq.titleStartsWith) == false) continue;
                     //}
 
-                    filteredTimes.Add(xx);
+                //    filteredTimes.Add(xx);
 
-                }
+                //}
 
-                zz = filteredTimes
-                    .OrderBy(mt => mt.datetime)
-                    .ThenBy(mt => mt.title)
-                    .ToList();
+                //zz = filteredTimes
+                //    .OrderBy(mt => mt.datetime)
+                //    .ThenBy(mt => mt.title)
+                //    .ToList();
             }
             catch (Exception ex)
             {
@@ -136,8 +142,265 @@ namespace WebApplication4.Controllers
 
             }
 
-            return zz;
+            //return zz;
 
+        }
+
+        private void ReorgTheDataByTime(string thedata)
+        {   
+            List<m.Movie> themovies                    = new List<m.Movie>();
+            List<string> xtheaterNames                 = new List<string>();
+            List<string> xmovieNames                   = new List<string>();
+            List<string> xxmovieNames                  = new List<string>();
+
+            List<m.TimesWithNameTheater> allTimes      = new List<m.TimesWithNameTheater>();
+            List<m.TimesWithNameTheater> allTimeSorted = new List<m.TimesWithNameTheater>();
+
+            try
+            {
+                themovies = ns.JsonConvert.DeserializeObject<List<m.Movie>>(thedata);
+
+                //flatten Movie structure, organized by movie, into structure organized by time
+                foreach (m.Movie m in themovies)
+                {
+                    foreach (m.Showtime st in m.showtimes)
+                    {
+                        m.TimesWithNameTheater twnt = new m.TimesWithNameTheater();
+                        int idx                     = st.dateTime.IndexOf("T");
+                        string x                    = st.dateTime.Substring(idx + 1);
+                        twnt.datetime               = x;// st.dateTime;
+                        twnt.theTheater             = st.theatre.name;
+                        twnt.title                  = m.title;
+                        twnt.runTime                = (String.IsNullOrEmpty(m.runTime) == true) ? "????" : twnt.runTime = m.runTime.Substring(2, 2) + ":" + m.runTime.Substring(5, 2);
+
+                        allTimes.Add(twnt);
+
+                        if (xtheaterNames.Contains(twnt.theTheater) == false)
+                        {
+                            xtheaterNames.Add(twnt.theTheater);
+                        }
+
+                        string xx = twnt.title + "|" + twnt.runTime;
+
+                        if (xxmovieNames.Contains(xx) == false)
+                        {
+                            xxmovieNames.Add(xx);
+                        }
+
+                    }
+                }
+
+                theaterNames = xtheaterNames.Distinct().ToList();
+                xmovieNames = xxmovieNames.Distinct().ToList();
+
+                theaterNames.Sort();
+                xmovieNames.Sort();
+
+                movieNames = xmovieNames
+                    .Select(amovie => new m.MovieNameObj { movieName = amovie.Split('|')[0], runTime = amovie.Split('|')[1] })
+                    .ToList();
+                
+                allTimeSorted = allTimes
+                       .OrderBy(mt => mt.datetime)
+                       .ThenBy(mt => mt.title)
+                       .ToList();
+
+                foreach (m.TimesWithNameTheater twnt in allTimeSorted)
+                {
+                    m.MovieTime amt = new m.MovieTime();
+
+                    int theaterNameIdx = theaterNames.FindIndex(atheaterName => atheaterName == twnt.theTheater);
+                    int movieNameidx   = movieNames.FindIndex(amovieObj => amovieObj.movieName == twnt.title);
+                    
+                    amt.showtime = twnt.datetime;
+                    amt.movieNameIdx = movieNameidx.ToString();
+                    amt.theaterNameIdx = theaterNameIdx.ToString();
+
+                    movieTimes.Add(amt);
+                   
+                }
+
+            }
+            catch (Exception ex)
+            {
+                mr.Status = "fail: ";
+                mr.ErrMessage.Add(ex.Message + ", " + ex.StackTrace);
+                throw ex;
+            }
+
+            return;
+
+        }
+
+        private void SetUpSql(string sqlStatement)
+        {
+            string connStr = ConfigurationManager.ConnectionStrings["MovieTimesConnectionString"].ConnectionString;
+            //string connStr     = ConfigurationManager.ConnectionStrings["localdb"].ConnectionString;
+            SqlConnection conn = new SqlConnection(connStr);
+            cmd                = new SqlCommand(sqlStatement, conn);
+            cmd.CommandText    = sqlStatement;
+            cmd.CommandType    = CommandType.Text;
+    
+            conn.Open();
+
+        }
+        
+        private string GetMovieDataFromDB(m.ShowTimeReq stq)
+        {
+
+            try
+            {
+                //string sql1 = String.Format("select jsonData      from rawJsonData  where viewDate = '{0}' and viewZip = '{1}'", stq.viewDate, stq.viewZip);
+                string sql2 = String.Format("select movieNames    from movieNames   where viewDate = '{0}' and viewZip = '{1}'", stq.viewDate, stq.viewZip);
+                string sql3 = String.Format("select theaterNames  from theaterNames where viewDate = '{0}' and viewZip = '{1}'", stq.viewDate, stq.viewZip);
+                string sql4 = String.Format("select movieShowings from movieTimes   where viewDate = '{0}' and viewZip = '{1}'", stq.viewDate, stq.viewZip);
+                
+                //SetUpSql(sql1);
+                //Object o   = cmd.ExecuteScalar();
+                //if (o != null) rawJson1 = o.ToString();
+
+                SetUpSql(sql2);
+                Object o = cmd.ExecuteScalar();
+                if (o != null) rawJson2 = o.ToString();
+                
+                SetUpSql(sql3);
+                o = cmd.ExecuteScalar();
+                if (o != null) rawJson3 = o.ToString();
+                
+                SetUpSql(sql4);
+                o = cmd.ExecuteScalar();
+                if (o != null) rawJson4 = o.ToString();
+
+
+            }
+            catch (Exception ex)
+            {
+                mr.Status = "fail: ";
+                mr.ErrMessage.Add(ex.Message + ", " + ex.StackTrace);
+                throw ex;
+            }
+
+            return rawJson1;
+
+        }
+
+        private int PutMovieDataIntoDB(m.ShowTimeReq stq)
+        {
+            int rc = -1;
+            string rawJson = "";
+            string sql = "";
+
+            try
+            {
+                //rawJson = ns.JsonConvert.SerializeObject(allTimeSorted);
+                //sql = String.Format("insert into rawJsonData(viewDate, viewZip, jsonData) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
+                //SetUpSql(sql);
+                //rc = cmd.ExecuteNonQuery();
+
+                rawJson = ns.JsonConvert.SerializeObject(movieNames);
+                sql = String.Format("insert into movieNames(viewDate, viewZip, movieNames) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
+                SetUpSql(sql);
+                rc = cmd.ExecuteNonQuery();
+
+                rawJson = ns.JsonConvert.SerializeObject(theaterNames);
+                sql = String.Format("insert into theaterNames(viewDate, viewZip, theaterNames) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
+                SetUpSql(sql);
+                rc = cmd.ExecuteNonQuery();
+
+                rawJson = ns.JsonConvert.SerializeObject(movieTimes);
+                sql = String.Format("insert into movieTimes(viewDate, viewZip, movieShowings) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
+                SetUpSql(sql);
+                rc = cmd.ExecuteNonQuery();
+
+            }
+            catch (Exception ex)
+            {
+                mr.Status = "fail: ";
+                mr.ErrMessage.Add(ex.Message + ", " + ex.StackTrace);
+                throw ex;
+            }
+
+            return rc;
+            
+        }
+
+        private string GetMovieDataFromWeb(m.ShowTimeReq stq)
+        {
+            WebRequest wreq;
+            WebResponse wresp;
+            Stream s;
+            StreamReader sr;
+            string x = "";
+            string thedata = "";
+
+            try
+            {
+                //string apikey       = "axryg8wt4ajne2ghg5junxbg"; //v1
+                string apikey       = "d2er6ess8g5eccjhju6puy5p"; //v1.1
+                string baseUrl      = "http://data.tmsapi.com/v1.1";
+                string showtimesUrl = baseUrl + "/movies/showings";
+                string zipCode      = stq.viewZip;// "10522";
+                string today        = stq.viewDate;
+                string radius       = stq.viewMiles;// "10";
+                string lat          = stq.viewLat;
+                string lon          = stq.viewLon;
+                
+                //zipCode = "";
+                showtimesUrl = (String.IsNullOrEmpty(zipCode) == true) ?
+                     String.Format(showtimesUrl + "?startDate={0}&radius={1}&api_key={2}&lat={3}&lng={4}", today, radius, apikey, lat, lon)
+                   : String.Format(showtimesUrl + "?startDate={0}&radius={1}&api_key={2}&zip={3}", today, radius, apikey, zipCode);
+
+                wreq        = WebRequest.Create(showtimesUrl);
+                wreq.Method = "GET";
+
+                wresp       = wreq.GetResponse();
+                s           = wresp.GetResponseStream();
+                
+                sr          = new StreamReader(s);
+                thedata     = sr.ReadToEnd();
+                
+                x           = thedata.Replace("'", "''");
+
+            }
+            catch (WebException wex)
+            {
+                WebResponse wr     = wex.Response;
+                Stream ss          = wr.GetResponseStream();
+                StreamReader ssr   = new StreamReader(ss);
+                string xxx         = ssr.ReadToEnd();
+                ns.Linq.JObject jo = ns.Linq.JObject.Parse(xxx);
+                dynamic dd         = ns.Linq.JObject.Parse(xxx);
+
+                mr.Status = "fail";
+                mr.ErrMessage.Add(wex.Message + "," + jo["errorCode"] + "," + jo["errorMessage"] + "," + wex.StackTrace);
+                throw wex;
+
+            }
+            catch (Exception ex)
+            {
+                mr.Status = "fail: ";
+                mr.ErrMessage.Add(ex.Message + ", " + ex.StackTrace);
+                throw ex;
+            }
+
+            return x;
+
+        }
+
+        // GET api/values/5
+        public string Get(int id)
+        {
+            return "value";
+        }
+
+        // PUT api/values/5
+        public void Put(int id, [FromBody]string value)
+        {
+        }
+
+        // DELETE api/values/5
+        public void Delete(int id)
+        {
         }
 
         private List<m.cTimesWithNameTheater> CreateCompressedListing(List<m.TimesWithNameTheater> allTimesSorted)
@@ -209,269 +472,6 @@ namespace WebApplication4.Controllers
             var groupCountOrderMT = groupCount.OrderBy(x => x.mt);
             var groupCountOrderNum = groupCount.OrderByDescending(x => x.mtCnt);
 
-        }
-
-        public List<string> theaterNames                  = new List<string>();
-        public List<m.MovieNameObj> movieNames            = new List<m.MovieNameObj>();
-        public List<m.MovieTime> movieTimes               = new List<m.MovieTime>();
-
-        private List<m.TimesWithNameTheater> ReorgTheDataByTime(string thedata)
-        {   
-            List<m.Movie> themovies                    = new List<m.Movie>();
-            List<string> xtheaterNames                 = new List<string>();
-            List<string> xmovieNames                   = new List<string>();
-            List<string> xxmovieNames                  = new List<string>();
-
-            List<m.TimesWithNameTheater> allTimes      = new List<m.TimesWithNameTheater>();
-            List<m.TimesWithNameTheater> allTimeSorted = new List<m.TimesWithNameTheater>();
-
-            try
-            {
-                themovies = ns.JsonConvert.DeserializeObject<List<m.Movie>>(thedata);
-
-                //flatten Movie structure, organized by movie, into structure organized by time
-                foreach (m.Movie m in themovies)
-                {
-                    foreach (m.Showtime st in m.showtimes)
-                    {
-                        m.TimesWithNameTheater twnt = new m.TimesWithNameTheater();
-                        int idx                     = st.dateTime.IndexOf("T");
-                        string x                    = st.dateTime.Substring(idx + 1);
-                        twnt.datetime               = x;// st.dateTime;
-                        twnt.theTheater             = st.theatre.name;
-                        twnt.title                  = m.title;
-                        twnt.runTime                = (String.IsNullOrEmpty(m.runTime) == true) ? "????" : twnt.runTime = m.runTime.Substring(2, 2) + ":" + m.runTime.Substring(5, 2);
-
-                        allTimes.Add(twnt);
-
-                        if (xtheaterNames.Contains(twnt.theTheater) == false)
-                        {
-                            xtheaterNames.Add(twnt.theTheater);
-                        }
-
-                        string xx = twnt.title + "|" + twnt.runTime;
-
-                        if (xxmovieNames.Contains(xx) == false)
-                        {
-                            xxmovieNames.Add(xx);
-                        }
-
-                    }
-                }
-
-                theaterNames = xtheaterNames.Distinct().ToList();
-                xmovieNames = xxmovieNames.Distinct().ToList();
-                movieNames = xmovieNames
-                    .Select(amovie => new m.MovieNameObj { movieName = amovie.Split('|')[0], runTime = amovie.Split('|')[1] })
-                    .ToList();
-                
-                allTimeSorted = allTimes
-                       .OrderBy(mt => mt.datetime)
-                       .ThenBy(mt => mt.title)
-                       .ToList();
-
-                foreach (m.TimesWithNameTheater twnt in allTimeSorted)
-                {
-                    m.MovieTime amt = new m.MovieTime();
-
-                    int theaterNameIdx = theaterNames.FindIndex(atheaterName => atheaterName == twnt.theTheater);
-                    int movieNameidx   = movieNames.FindIndex(amovieObj => amovieObj.movieName == twnt.title);
-                    
-                    amt.showtime = twnt.datetime;
-                    amt.movieNameIdx = movieNameidx.ToString();
-                    amt.theaterNameIdx = theaterNameIdx.ToString();
-
-                    movieTimes.Add(amt);
-                   
-                }
-
-            }
-            catch (Exception ex)
-            {
-                mr.Status = "fail: ";
-                mr.ErrMessage.Add(ex.Message + ", " + ex.StackTrace);
-                throw ex;
-            }
-
-            return allTimeSorted;
-
-        }
-
-        public SqlCommand cmd;
-
-        private void SetUpSql(string sqlStatement)
-        {
-            string connStr = ConfigurationManager.ConnectionStrings["MovieTimesConnectionString"].ConnectionString;
-            //string connStr     = ConfigurationManager.ConnectionStrings["localdb"].ConnectionString;
-            SqlConnection conn = new SqlConnection(connStr);
-            cmd                = new SqlCommand(sqlStatement, conn);
-            cmd.CommandText    = sqlStatement;
-            cmd.CommandType    = CommandType.Text;
-    
-            conn.Open();
-
-        }
-
-        public string rawJson1, rawJson2, rawJson3, rawJson4;
-        
-        private string GetMovieDataFromDB(m.ShowTimeReq stq)
-        {
-
-            try
-            {
-                string sql1 = String.Format("select jsonData      from rawJsonData  where viewDate = '{0}' and viewZip = '{1}'", stq.viewDate, stq.viewZip);
-                string sql2 = String.Format("select movieNames    from movieNames   where viewDate = '{0}' and viewZip = '{1}'", stq.viewDate, stq.viewZip);
-                string sql3 = String.Format("select theaterNames  from theaterNames where viewDate = '{0}' and viewZip = '{1}'", stq.viewDate, stq.viewZip);
-                string sql4 = String.Format("select movieShowings from movieTimes   where viewDate = '{0}' and viewZip = '{1}'", stq.viewDate, stq.viewZip);
-                
-                SetUpSql(sql1);
-                Object o   = cmd.ExecuteScalar();
-                if (o != null) rawJson1 = o.ToString();
-
-                SetUpSql(sql2);
-                o = cmd.ExecuteScalar();
-                if (o != null) rawJson2 = o.ToString();
-                
-                SetUpSql(sql3);
-                o = cmd.ExecuteScalar();
-                if (o != null) rawJson3 = o.ToString();
-                
-                SetUpSql(sql4);
-                o = cmd.ExecuteScalar();
-                if (o != null) rawJson4 = o.ToString();
-
-
-            }
-            catch (Exception ex)
-            {
-                mr.Status = "fail: ";
-                mr.ErrMessage.Add(ex.Message + ", " + ex.StackTrace);
-                throw ex;
-            }
-
-            return rawJson1;
-
-        }
-
-        private int PutMovieDataIntoDB(m.ShowTimeReq stq, List<m.TimesWithNameTheater> allTimeSorted)
-        {
-            int rc = -1;
-            string rawJson = "";
-            string sql = "";
-
-            try
-            {
-                rawJson = ns.JsonConvert.SerializeObject(allTimeSorted);
-                sql = String.Format("insert into rawJsonData(viewDate, viewZip, jsonData) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
-                SetUpSql(sql);
-                rc = cmd.ExecuteNonQuery();
-
-                rawJson = ns.JsonConvert.SerializeObject(movieNames);
-                sql = String.Format("insert into movieNames(viewDate, viewZip, movieNames) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
-                SetUpSql(sql);
-                rc = cmd.ExecuteNonQuery();
-
-                rawJson = ns.JsonConvert.SerializeObject(theaterNames);
-                sql = String.Format("insert into theaterNames(viewDate, viewZip, theaterNames) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
-                SetUpSql(sql);
-                rc = cmd.ExecuteNonQuery();
-
-                rawJson = ns.JsonConvert.SerializeObject(movieTimes);
-                sql = String.Format("insert into movieTimes(viewDate, viewZip, movieShowings) values('{0}', '{1}', '{2}')", stq.viewDate, stq.viewZip, rawJson);
-                SetUpSql(sql);
-                rc = cmd.ExecuteNonQuery();
-
-
-
-
-            }
-            catch (Exception ex)
-            {
-                mr.Status = "fail: ";
-                mr.ErrMessage.Add(ex.Message + ", " + ex.StackTrace);
-                throw ex;
-            }
-
-            return rc;
-            
-        }
-
-        private string GetMovieDataFromWeb(m.ShowTimeReq stq)
-        {
-            WebRequest wreq;
-            WebResponse wresp;
-            Stream s;
-            StreamReader sr;
-            string x = "";
-            string thedata = "";
-
-            try
-            {
-                //string apikey       = "axryg8wt4ajne2ghg5junxbg"; //v1
-                string apikey       = "d2er6ess8g5eccjhju6puy5p"; //v1.1
-                string baseUrl      = "http://data.tmsapi.com/v1.1";
-                string showtimesUrl = baseUrl + "/movies/showings";
-                string zipCode      = stq.viewZip;// "10522";
-                string today        = stq.viewDate;
-                string radius       = stq.viewMiles;// "10";
-                string lat          = stq.viewLat;
-                string lon          = stq.viewLon;
-                
-                //zipCode = "";
-                showtimesUrl = (String.IsNullOrEmpty(zipCode) == true) ?
-                     String.Format(showtimesUrl + "?startDate={0}&radius={1}&api_key={2}&lat={3}&lng={4}", today, radius, apikey, lat, lon)
-                   : String.Format(showtimesUrl + "?startDate={0}&radius={1}&api_key={2}&zip={3}", today, radius, apikey, zipCode);
-
-                wreq        = WebRequest.Create(showtimesUrl);
-                wreq.Method = "GET";
-
-                wresp       = wreq.GetResponse();
-                s           = wresp.GetResponseStream();
-                
-                sr          = new StreamReader(s);
-                thedata     = sr.ReadToEnd();
-                
-                x           = thedata.Replace("'", "''");
-            }
-            catch (WebException wex)
-            {
-                WebResponse wr = wex.Response;
-                Stream ss = wr.GetResponseStream();
-                StreamReader ssr = new StreamReader(ss);
-                string xxx = ssr.ReadToEnd();
-                ns.Linq.JObject jo = ns.Linq.JObject.Parse(xxx);
-                dynamic dd = ns.Linq.JObject.Parse(xxx);
-
-                mr.Status = "fail";
-                mr.ErrMessage.Add(wex.Message + "," + jo["errorCode"] + "," + jo["errorMessage"] + "," + wex.StackTrace);
-                throw wex;
-
-            }
-            catch (Exception ex)
-            {
-                mr.Status = "fail: ";
-                mr.ErrMessage.Add(ex.Message + ", " + ex.StackTrace);
-                throw ex;
-            }
-
-            return x;
-
-        }
-
-        // GET api/values/5
-        public string Get(int id)
-        {
-            return "value";
-        }
-
-        // PUT api/values/5
-        public void Put(int id, [FromBody]string value)
-        {
-        }
-
-        // DELETE api/values/5
-        public void Delete(int id)
-        {
         }
 
         //StringBuilder sb = new StringBuilder();

@@ -172,8 +172,8 @@
                     var rc = 0;
                     var asortVal, bsortVal;
 
-                    if ( type == "theater") { asortVal = a.h; bsortVal = b.h; }
-                    else                   { asortVal = a.t; bsortVal = b.t; }
+                    if ( type == "theater") { asortVal = a.theater; bsortVal = b.theater; }
+                    else                   { asortVal = a.title; bsortVal = b.title; }
                     
                     if (asortVal < bsortVal) rc = -1
                     if (asortVal > bsortVal) rc = 1;
@@ -257,10 +257,10 @@
                         }
                         else
                         {
-                            movieData = data.MovieTimes;
+                            movieData = deNormalize(data); //data.MovieTimes;
                             //$("#basetable").remove();
-                            if (type == 1) createTable(data.MovieTimes);
-                            else createBaseTable(data.MovieTimes);
+                            if (type == 1) createTable(movieData);
+                            else createBaseTable(movieData);
                            
                         }
                     } //end success function
@@ -275,14 +275,49 @@
                     function (idx, aval) {
                         var arow = "<tr>"
                             + "<td>" + idx + "</td>"
-                            + "<td>" + aval.d + "</td>"
-                            + "<td>" + aval.r + "</td>"
-                            + "<td>" + aval.t + "</td>"
-                            + "<td>" + aval.h + "</td>"
+                            + "<td>" + aval.time + "</td>"
+                            + "<td>" + aval.runtime + "</td>"
+                            + "<td>" + aval.title + "</td>"
+                            + "<td>" + aval.theater + "</td>"
                             + "</tr>";
                         $("#basetable").append(arow);
 
                     });
+            }
+
+            function deNormalize(data) {
+
+                var movieTimesIdx = data.movieTimesIdx;
+                var theaterNames = data.theaterNames.sort();
+                var movieNames = data.movieNames.sort();
+
+                var movieTimesNew = [];
+
+                for (var i = 0; i < movieTimesIdx.length; i++) {
+                    var movieTimeIdx = movieTimesIdx[i];
+
+                    var movieIdx = movieTimeIdx.m;
+                    var theaterIdx = movieTimeIdx.t;
+                    var showTime = movieTimeIdx.s;
+
+                    var movieName = movieNames[movieIdx].m;
+                    var runTime = movieNames[movieIdx].r;
+                    var theaterName = theaterNames[theaterIdx];
+
+                    var obj = {
+                        cnt: i + 1,
+                        time: showTime,
+                        theater: theaterName,
+                        runtime: runTime,
+                        title: movieName
+                    };
+
+                    movieTimesNew.push(obj);
+
+                }
+
+                return movieTimesNew;
+
             }
 
             function createBaseTable(movies) {
@@ -291,7 +326,7 @@
                                + "<table id='basetable' rules='all' border='1'>"
                                + "<tr><th>#</th><th>Time</th><th>Movies</th></tr>"
                                + "</table></div>");
-                moviesByTime = _.groupBy(movies, function (amovie) { return amovie.d; });
+                moviesByTime = _.groupBy(movies, function (amovie) { return amovie.time; });
 
                 var cnt = 1;
 
@@ -311,7 +346,7 @@
                     var key = $(thetr).attr('key');
                     var data = moviesByTime[key];
                     createSideTable(data, key);
-                    console.log('here');
+                    console.log('click here ' + key);
                 })
 
                 $("#content").on("mouseenter", "tr", function () {
@@ -319,17 +354,21 @@
                     var key = $(thetr).attr('key');
                     var data = moviesByTime[key];
                     createSideTable(data, key);
-                    console.log('here');
+                    console.log('enter here ' + key);
                 })
                 $("#content").on("mouseleave", "tr", function () {
-                    $("#sidetable").remove();
-                    console.log('here');
+                    var thetr = this;
+                    var key = $(thetr).attr('key');
+                    console.log('leave here ' + key);
+
+                    $("#divBaseTable").remove();
                 })
             }
 
             function createSideTable(movies, key) {
-                $("#sidetable").remove();
-                $("#content").append("<div  style='float:left; margin-left: 10px;' >" 
+                $("#divBaseTable").remove();
+                var xxtop = $(window).scrollTop()+ 50;
+                $("#content").append("<div id='divBaseTable' style='float:left; margin-left: 10px; position: absolute; left: 230px; top:" + xxtop + "px; ' >" 
                                + "<table id='sidetable' rules='all' border='1'>"
                                + "<tr><th>#</th>"
                                + "<th id='hdrTitle' width=400>" + movies.length + " movies at " + key
@@ -340,9 +379,9 @@
                         idx++;
                         var arow = "<tr>"
                             + "<td>" + idx + "</td>"
-                            + "<td>" + aval.t + "</td>"
-                            + "<td>" + aval.h + "</td>"
-                            + "<td>" + aval.r + "</td>"
+                            + "<td>" + aval.title + "</td>"
+                            + "<td>" + aval.theater + "</td>"
+                            + "<td>" + aval.runtime + "</td>"
                             + "</tr>";
                         $("#sidetable").append(arow);
 

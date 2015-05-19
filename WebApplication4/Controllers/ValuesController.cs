@@ -29,7 +29,7 @@ namespace WebApplication4.Controllers
 //      public IEnumerable<m.TimesWithNameTheater> Post([FromUri] m.ShowTimeReq stq)
         public m.MovieResults Post([FromUri] m.ShowTimeReq stq)
         {
-            mr.Status = "ok";
+            mr.Status     = "ok";
             mr.ErrMessage = new List<string>();
 
             //List<m.TimesWithNameTheater> xx = new List<m.TimesWithNameTheater>();
@@ -46,9 +46,9 @@ namespace WebApplication4.Controllers
             }
 
             //mr.MovieTimes = xx;
-            mr.movieNames = movieNames;
+            mr.movieNames    = movieNames;
             mr.movieTimesIdx = movieTimes;
-            mr.theaterNames = theaterNames;
+            mr.theaterNames  = theaterNames;
 
             return mr; 
 
@@ -70,10 +70,10 @@ namespace WebApplication4.Controllers
                 }
 
                 //get data from db
-                thedata = GetMovieDataFromDB(stq);
+                 GetMovieDataFromDB(stq);
 
                 //if db failure, get directly from web
-                if (String.IsNullOrEmpty(thedata) == false)
+                if (String.IsNullOrEmpty(rawJson2) == false)
                 {
                     mr.Source = "db";
                     //deseiralize data back from db
@@ -245,7 +245,7 @@ namespace WebApplication4.Controllers
 
         }
         
-        private string GetMovieDataFromDB(m.ShowTimeReq stq)
+        private void GetMovieDataFromDB(m.ShowTimeReq stq)
         {
 
             try
@@ -280,7 +280,7 @@ namespace WebApplication4.Controllers
                 throw ex;
             }
 
-            return rawJson1;
+            //return rawJson1;
 
         }
 
